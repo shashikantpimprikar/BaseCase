@@ -1,0 +1,4060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Assumptive Base Case - 5 Year TCO Estimator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background-color: #0d1b2e;
+      color: #ffffff;
+      text-align: center;
+      padding: 28px 20px 24px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Tab Bar ── */
+    .layout {
+      display: flex;
+      align-items: flex-start;
+      min-height: calc(100vh - 116px);
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .tab-bar {
+      background-color: #0d1b2e;
+      display: flex;
+      flex-direction: column;
+      width: 220px;
+      min-height: calc(100vh - 116px);
+      padding: 16px 8px;
+      border-right: 1px solid #1e2f45;
+      overflow-y: auto;
+      white-space: normal;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      box-shadow: 2px 0 18px rgba(0, 0, 0, 0.12);
+      z-index: 2;
+    }
+
+    .tab-bar::-webkit-scrollbar {
+      width: 6px;
+      height: 3px;
+    }
+    .tab-bar::-webkit-scrollbar-thumb {
+      background: #2d4a6e;
+      border-radius: 3px;
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      color: #a8b8cc;
+      font-size: 13px;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+      user-select: none;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+
+    .tab:hover {
+      color: #dce8f5;
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab.active {
+      color: #ffffff;
+      border-left: 3px solid #3b82f6;
+      background-color: rgba(59, 130, 246, 0.12);
+    }
+
+    .tab .tab-icon {
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Show Rates & KPIs toggle tab — pushed to the right */
+    .tab-bar-spacer {
+      flex: 1;
+    }
+
+    .tab.toggle-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #a8b8cc;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 13px 12px 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tab.toggle-tab input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    /* ── Main content area ── */
+    .content-area {
+      padding: 16px 20px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Tab panels */
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #dde3ea;
+      padding: 16px 20px 20px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #1a2535;
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 11.5px;
+      color: #6b7a90;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    /* ── Form fields ── */
+    .field-label {
+      font-size: 11.5px;
+      color: #374151;
+      font-weight: 500;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: #6b7a90;
+      line-height: 1.45;
+    }
+
+    .field-hint a {
+      color: #3b82f6;
+      text-decoration: none;
+    }
+    .field-hint a:hover {
+      text-decoration: underline;
+    }
+
+    /* Select */
+    .select-wrapper {
+      position: relative;
+      display: block;
+    }
+
+    .select-wrapper select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #ffffff;
+      border: 1px solid #c8d0db;
+      border-radius: 6px;
+      padding: 6px 36px 6px 10px;
+      font-size: 12px;
+      color: #1a2535;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s;
+      height: 32px;
+    }
+
+    .select-wrapper select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    .select-wrapper::after {
+      content: "▾";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7a90;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    /* Number input */
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid #c8d0db;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      color: #1a2535;
+      outline: none;
+      text-align: right;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+      height: 32px;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"]:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    /* Grid helpers */
+    .row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .col-left {
+      flex: 1 1 460px;
+      max-width: 480px;
+    }
+
+    .col-half-right {
+      flex: 1 1 300px;
+      padding-top: 36px;
+    }
+
+    .col-half {
+      flex: 1 1 200px;
+    }
+
+    .col-half-right {
+      flex: 1 1 300px;
+      padding-top: 36px;
+    }
+
+    /* ── Distributed Compute card layout ── */
+    .compute-split {
+      display: flex;
+      gap: 0;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .compute-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .compute-divider {
+      width: 1px;
+      background: #dde3ea;
+      align-self: stretch;
+      margin: 0 20px;
+      flex-shrink: 0;
+    }
+
+    .compute-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a2535;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #dde3ea;
+    }
+
+    .server-summary {
+      font-size: 12px;
+      color: #4f667b;
+      margin-top: 14px;
+      padding: 12px 0 0 0;
+      border-top: 1px solid #e5ebf0;
+    }
+
+    .compute-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .compute-th {
+      font-size: 11px;
+      font-weight: 500;
+      color: #6b7a90;
+      padding: 0 6px 8px 0;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .compute-td {
+      padding: 4px 6px 4px 0;
+      vertical-align: middle;
+    }
+
+    .compute-row + .compute-row .compute-td {
+      padding-top: 6px;
+    }
+
+    .compute-select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #ffffff;
+      border: 1px solid #c8d0db;
+      border-radius: 6px;
+      padding: 5px 28px 5px 8px;
+      font-size: 12px;
+      color: #1a2535;
+      cursor: pointer;
+      outline: none;
+      height: 32px;
+    }
+
+    .compute-number {
+      width: 100%;
+      border: 1px solid #c8d0db;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 12px;
+      color: #1a2535;
+      outline: none;
+      text-align: center;
+      height: 32px;
+      -moz-appearance: textfield;
+    }
+
+    .compute-number::-webkit-outer-spin-button,
+    .compute-number::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .compute-number:focus,
+    .compute-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    .readonly-input {
+      width: 100%;
+      border: 1px solid #c8d0db;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #1a2535;
+      background: #f8fbff;
+      outline: none;
+      height: 44px;
+      box-sizing: border-box;
+    }
+
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #134e8c;
+      font-size: 12px;
+      margin-bottom: 18px;
+    }
+
+    .storage-table .compute-th {
+      padding: 0 10px 8px 0;
+    }
+
+    .storage-table .compute-td {
+      padding: 8px 10px 8px 0;
+    }
+
+    .storage-panel .compute-select,
+    .storage-panel .compute-number {
+      height: 40px;
+      border-radius: 10px;
+    }
+
+    .storage-summary {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #4f667b;
+      line-height: 1.6;
+    }
+
+    .storage-backup-field {
+      margin-bottom: 16px;
+    }
+
+    .add-row-btn {
+      margin-top: 10px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .add-row-btn:hover {
+      background: #2563eb;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #9aa5b4;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .delete-btn:hover {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .vmware-row {
+      padding-top: 12px;
+      border-top: 1px solid #dde3ea;
+      margin-top: 4px;
+    }
+
+    /* ── Applicable Towers checkboxes ── */
+    .towers-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin-top: 6px;
+    }
+
+    .tower-cell {
+      padding: 9px 12px 9px 0;
+      vertical-align: middle;
+    }
+
+    .tower-checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #1a2535;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tower-checkbox-label input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Inputs table (2-col × 3-row) ── */
+    .inputs-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .inputs-table col.col-input {
+      width: 55%;
+    }
+
+    .inputs-table col.col-hint {
+      width: 45%;
+    }
+
+    .inputs-table tr {
+      vertical-align: top;
+    }
+
+    .td-input {
+      padding: 10px 16px 10px 0;
+      border-bottom: 1px solid #f0f2f5;
+    }
+
+    .td-hint {
+      padding: 10px 0 10px 16px;
+      border-bottom: 1px solid #f0f2f5;
+      vertical-align: middle;
+    }
+
+    .inputs-table tr:last-child .td-input,
+    .inputs-table tr:last-child .td-hint {
+      border-bottom: none;
+    }
+
+    /* Split inputs side by side inside a cell */
+    .split-inputs {
+      display: flex;
+      gap: 14px;
+    }
+
+    .split-field {
+      flex: 1;
+    }
+
+    /* Placeholder tab content */
+    .placeholder-content {
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid #dde3ea;
+      padding: 60px 32px;
+      text-align: center;
+      color: #9aa5b4;
+      font-size: 14px;
+    }
+
+    /* ── Managed Services Live Sizing ── */
+    #ms-sizing-section {
+      margin: 0;
+    }
+    #ms-sizing-section .ms-header {
+      display: none;
+    }
+    #ms-sizing-body {
+      padding: 0;
+      background: transparent;
+    }
+    .live-sizing-section {
+  margin-top: 18px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #dde3ea;
+  background: #ffffff;
+}
+
+.live-sizing-header {
+  background: #1a3a5c;
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 0;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.live-sizing-header:hover {
+  background: #1a3a5c;
+}
+
+.live-sizing-title {
+  flex: 1;
+  color: #fff;
+}
+
+.live-sizing-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #a0c4e8;
+}
+
+.live-sizing-label {
+  font-weight: 400;
+  text-decoration: underline;
+}
+
+.live-sizing-arrow {
+  font-size: 11px;
+  display: inline-block;
+  transition: transform 0.25s;
+}
+
+.live-sizing-body {
+  background: #ffffff;
+  padding: 12px;
+}
+.ms-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+@media (max-width: 768px) {
+  .ms-cards-grid { grid-template-columns: 1fr; }
+}
+
+/* Card shell */
+.ms-card {
+  background: #f5f7fa;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Card header */
+.ms-card-header {
+  background: #f0f4f8;
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a3a5c;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 2px solid #d0d7e2;
+}
+
+/* Card table */
+.ms-card-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  flex: 1;
+  table-layout: fixed;
+}
+.ms-card-table thead tr th {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+  padding: 5px 6px;
+  color: #4a5568;
+  background: #f0f4f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1.5px solid #d0d7e2;
+}
+
+.ms-card-table thead tr th:first-child {
+  text-align: left;
+}
+
+.ms-card-table tbody tr td {
+  padding: 5px 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-card-table tbody tr td:first-child {
+  text-align: left;
+}
+
+.ms-card-table th:nth-child(1),
+.ms-card-table td:nth-child(1) { width: 18%; }
+
+.ms-card-table th:nth-child(2),
+.ms-card-table td:nth-child(2) { width: 14%; }
+
+.ms-card-table th:nth-child(3),
+.ms-card-table td:nth-child(3) { width: 18%; }
+
+.ms-card-table th:nth-child(4), 
+.ms-card-table td:nth-child(4) { width: 10%; }
+
+.ms-card-table th:nth-child(5),
+.ms-card-table td:nth-child(5) { width: 16%; }
+
+.ms-card-table th:nth-child(6),
+.ms-card-table td:nth-child(6) { width: 24%; }
+
+/* Table head */
+.ms-card-table thead tr {
+  background: #edf0f4;
+}
+.ms-card-table thead th {
+  padding: 5px 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid #2e3347;
+}
+.ms-card-table thead th:not(:first-child) { text-align: right; }
+
+/* Table body rows */
+.ms-card-table tbody tr {
+  border-bottom: 1px solid #dde3ea;
+  transition: background 0.15s;
+}
+.ms-card-table tbody tr:last-child  { border-bottom: none; }
+.ms-card-table tbody tr:hover       { background: #e8ecf2; }
+
+/* Table body cells */
+.ms-card-table td {
+  padding: 6px 10px;
+  color: #1a2b45;
+  vertical-align: middle;
+}
+.ms-card-table td:first-child {
+  font-weight: 600;
+  color: #0d1b2e;
+}
+
+/* Numeric cells — right-aligned, bold navy */
+.ms-card-table td.ms-number,
+.ms-card-table td.compute-td.ms-number {
+  text-align: right;
+  color: #1a3a5c;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Cost cells — right-aligned, green */
+.ms-card-table td.ms-cost,
+.ms-card-table td.compute-td.ms-cost {
+  text-align: right;
+  color: #2ecc71;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* Subtotal row */
+.ms-card-table tbody tr.ms-subtotal-row {
+  background: #edf0f4;
+  border-top: 2px solid #2e3347 !important;
+}
+.ms-card-table tbody tr.ms-subtotal-row td {
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: right;
+  padding: 7px 10px;
+}
+.ms-card-table tbody tr.ms-subtotal-row td.ms-cost {
+  font-size: 13px;
+  color: #2ecc71;
+}
+
+/* Total banner */
+#ms-total-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a3a5c;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid #2e3347;
+}
+#ms-total-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2ecc71;
+}
+
+/* Empty/loading notice */
+.ms-loading,
+.ms-empty-notice {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
+}-table td.ms-cost {
+  text-align: right;
+  color: #059669;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.ms-card-table tfoot tr {
+  background: #f5f7fa;
+  border-top: 1px solid #dde3ea;
+}
+.ms-card-table tfoot td {
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a2b45;
+}
+.ms-card-table tfoot td.ms-cost {
+  color: #059669;
+  font-size: 12px;
+  text-align: right;
+}
+##ms-total-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a3a5c;
+  color: #fff;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+}
+#ms-total-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.ms-empty-notice {
+  text-align: center;
+  padding: 20px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-style: italic;
+}
+
+    @media (max-width: 1000px) {
+      .layout {
+        flex-direction: column;
+      }
+      .tab-bar {
+        position: relative;
+        top: auto;
+        width: 100%;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid #1e2f45;
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 12px 10px;
+        box-shadow: none;
+      }
+      .tab {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        margin-bottom: 0;
+        flex: 0 0 auto;
+      }
+      .tab.active {
+        border-left: none;
+        border-bottom: 3px solid #3b82f6;
+        background-color: transparent;
+      }
+      .toggle-tab {
+        margin-left: auto;
+      }
+      .content-area {
+        padding: 18px 14px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .row {
+        flex-direction: column;
+      }
+      .col-right,
+      .col-half-right {
+        padding-top: 0;
+      }
+      .col-left {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════ -->
+  <div class="header">
+    <h1>Assumptive Base Case - 5 Year TCO Estimator</h1>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB BAR
+  ══════════════════════════════════════════ -->
+  <div class="layout">
+    <div class="tab-bar" role="tablist">
+
+      <div class="tab active" role="tab" data-tab="inputs" onclick="switchTab('inputs', this)">
+        <span class="tab-icon">☰</span>
+        Inputs
+      </div>
+
+      <div class="tab" role="tab" data-tab="infra-rates" onclick="switchTab('infra-rates', this)">
+        <span class="tab-icon">🖥</span>
+        Infrastructure Rates
+      </div>
+
+      <div class="tab" role="tab" data-tab="fte-kpis" onclick="switchTab('fte-kpis', this)">
+        <span class="tab-icon">📋</span>
+        FTE KPIs
+      </div>
+
+      <div class="tab" role="tab" data-tab="managed-services" onclick="switchTab('managed-services', this)">
+        <span class="tab-icon">👥</span>
+        Managed Services Rates
+      </div>
+
+      <div class="tab" role="tab" data-tab="vmware-rate" onclick="switchTab('vmware-rate', this)">
+        <span class="tab-icon">☁️</span>
+        VMware Rate Card
+      </div>
+
+      <div class="tab" role="tab" data-tab="tco-analysis" onclick="switchTab('tco-analysis', this)">
+        <span class="tab-icon">📊</span>
+        TCO Analysis
+      </div>
+
+      <div class="tab" role="tab" data-tab="calc-steps" onclick="switchTab('calc-steps', this)">
+        <span class="tab-icon">🗂</span>
+        Calculation Steps
+      </div>
+
+      <div class="tab" role="tab" data-tab="exec-brief" onclick="switchTab('exec-brief', this)">
+        <span class="tab-icon">📄</span>
+        Executive Brief
+      </div>
+
+      <label class="tab toggle-tab">
+        <input type="checkbox" id="showRatesKPIs" checked />
+        Show Rates &amp; KPIs
+      </label>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         CONTENT AREA
+    ══════════════════════════════════════════ -->
+    <div class="content-area">
+    
+<!-- ── TAB: Inputs ── -->
+    <div id="panel-inputs" class="tab-panel active" role="tabpanel">
+
+      <div class="card">
+        <div class="card-title">Global Inputs</div>
+        <div class="card-subtitle">
+          Set operational maturity and the US/India delivery split. These global settings drive how FTE headcount is calculated from server counts and how labor cost is blended.
+        </div>
+
+        <!-- 2x3 Grid Table Layout -->
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+
+          <!-- Row 1: Operational Maturity Level -->
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="maturityLevel">Operational Maturity Level</label>
+              <div class="select-wrapper">
+                <select id="maturityLevel">
+                  <option value="lower">Lower — Less mature (LQ KPI)</option>
+                  <option value="median" selected>Median — Typical (Median KPI)</option>
+                  <option value="upper">Upper — Highly automated (UQ KPI)</option>
+                </select>
+              </div>
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">
+                Higher maturity = more automation = fewer FTEs per server. The selected quartile from the FTE KPI table is used in the labor calculation.
+              </span>
+            </td>
+          </tr>
+
+          <!-- Row 2: US Delivery + India Delivery -->
+          <tr>
+            <td class="td-input">
+              <div class="split-inputs">
+                <div class="split-field">
+                  <label class="field-label" for="usDelivery">US Delivery (%)</label>
+                  <input
+                    type="number"
+                    id="usDelivery"
+                    value="70"
+                    min="0"
+                    max="100"
+                    step="1"
+                    oninput="syncDelivery('us')"
+                  />
+                </div>
+                <div class="split-field">
+                  <label class="field-label" for="indiaDelivery">India Delivery (%)</label>
+                  <input
+                    type="number"
+                    id="indiaDelivery"
+                    value="30"
+                    min="0"
+                    max="100"
+                    step="1"
+                    oninput="syncDelivery('india')"
+                  />
+                </div>
+              </div>
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">
+                US and India delivery percentages must sum to 100%. Adjusting one auto-updates the other.
+              </span>
+            </td>
+          </tr>
+
+          <!-- Row 3: ECI -->
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="eci">Assumptive Employment Cost Index (%)</label>
+              <input
+                type="number"
+                id="eci"
+                value="3.8"
+                min="0"
+                step="0.1"
+              />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">
+                Pre-populated with US BLS ECI ≈ 3.8% (Q4 2024, private industry). Adjust as needed.
+                Source: <a href="https://bls.gov/eci" target="_blank" rel="noopener noreferrer">bls.gov/eci</a>
+              </span>
+            </td>
+          </tr>
+
+        </table>
+
+      </div><!-- /.card -->
+
+      <!-- START APPLICABLE TOWERS -->
+      <!-- ── Applicable Towers Card ── -->
+      <div id="applicable-towers-block" class="card" style="margin-top: 16px;">
+        <div class="card-title">Applicable Towers</div>
+        <div class="card-subtitle">Select the towers in scope. Only the corresponding input sections will be displayed below.</div>
+
+        <table class="towers-table">
+          <colgroup>
+            <col style="width: 50%;" />
+            <col style="width: 50%;" />
+          </colgroup>
+          <tr>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-compute" onchange="toggleTowerCard('tower-compute')" />
+                Distributed Service: Compute
+              </label>
+            </td>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-midrange" onchange="toggleTowerCard('tower-midrange')" />
+                Midrange: Compute
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-storage" onchange="toggleTowerCard('tower-storage')" />
+                Storage and Backup
+              </label>
+            </td>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-network" onchange="toggleTowerCard('tower-network')" />
+                Network
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-database" onchange="toggleTowerCard('tower-database')" />
+                Database and Middleware
+              </label>
+            </td>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-mainframe" onchange="toggleTowerCard('tower-mainframe')" />
+                Mainframe
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-security" onchange="toggleTowerCard('tower-security')" />
+                Security Services
+              </label>
+            </td>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-tools" onchange="toggleTowerCard('tower-tools')" />
+                Tools
+              </label>
+            </td>
+          </tr>
+          <tr>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-pmo" onchange="toggleTowerCard('tower-pmo')" />
+                PMO/SMO/Governance
+              </label>
+            </td>
+            <td class="tower-cell">
+              <label class="tower-checkbox-label">
+                <input type="checkbox" id="tower-datacenter" onchange="toggleTowerCard('tower-datacenter')" />
+                Datacenter
+              </label>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /.card applicable towers -->
+      <!-- END APPLICABLE TOWERS -->
+
+      <!-- ── Tower Input Cards (shown/hidden by checkbox) ── -->
+
+      <!-- Distributed Service: Compute -->
+      <div class="card tower-card" id="card-tower-compute" style="margin-top: 16px; display: none;">
+        <div class="card-title">Distributed Service: Compute</div>
+        <div class="card-subtitle">Capture servers in two sections. The first section (OS + Server Type) drives labor cost. The second section (Average vCPU/vRAM) drives infrastructure and VMware cost. Total counts in both sections must tally exactly.</div>
+
+        <!-- Two-panel split -->
+        <div class="compute-split">
+
+          <!-- LEFT: OS based Server Counts -->
+          <div class="compute-panel">
+            <div class="compute-section-title">OS based Server Counts</div>
+            <table class="compute-table">
+              <colgroup>
+                <col style="width: 32%;" />
+                <col style="width: 32%;" />
+                <col style="width: 28%;" />
+                <col style="width: 8%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="compute-th">Server OS</th>
+                  <th class="compute-th">Server Type</th>
+                  <th class="compute-th">Number of Servers</th>
+                  <th class="compute-th"></th>
+                </tr>
+              </thead>
+              <tbody id="compute-os-tbody">
+                <tr class="compute-row">
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select">
+                        <option value="windows" selected>Windows</option>
+                        <option value="linux">Linux</option>
+                        <option value="unix">Unix/AIX</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select">
+                        <option value="prod" selected>Prod</option>
+                        <option value="nonprod">Non-Prod</option>
+                        <option value="dr">DR</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" oninput="validateComputeCounts(); updateComputeServerSummary()" />
+                  </td>
+                  <td class="compute-td" style="text-align:center;">
+                    <button class="delete-btn" onclick="deleteComputeOSRow(this)" title="Delete row">✕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="add-row-btn" onclick="addComputeOSRow()">+ Add Row</button>
+          </div><!-- /.compute-panel left -->
+
+          <!-- Vertical divider -->
+          <div class="compute-divider"></div>
+
+          <!-- RIGHT: Average vCPU / vRAM based Server Counts -->
+          <div class="compute-panel">
+            <div class="compute-section-title">Average vCPU / vRAM based Server Counts</div>
+            <table class="compute-table">
+              <colgroup>
+                <col style="width: 34%;" />
+                <col style="width: 33%;" />
+                <col style="width: 33%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="compute-th">Average vCPU (vCores)</th>
+                  <th class="compute-th">Average vRAM (GB)</th>
+                  <th class="compute-th">Number of Servers</th>
+                </tr>
+              </thead>
+              <tbody id="compute-vcpu-tbody">
+                <tr class="compute-row">
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" />
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" />
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div><!-- /.compute-panel right -->
+
+        </div><!-- /.compute-split -->
+
+        <div class="server-summary">
+          Total Servers: <strong id="compute-total-servers">0</strong> · Prod: <strong id="compute-prod-servers">0</strong> · Non-Prod: <strong id="compute-nonprod-servers">0</strong>
+        </div>
+
+        <!-- Server count mismatch warning -->
+        <div id="compute-count-warning" style="display:none;margin-top:10px;margin-bottom:2px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;display:none;align-items:center;gap:8px;">
+          <span style="font-size:15px;color:#ef4444;flex-shrink:0;">⚠</span>
+          <span style="font-size:11.5px;color:#b91c1c;font-weight:500;">
+            OS based total (<span id="warn-os-count" style="font-weight:700;">0</span>) does not match
+            vCPU/vRAM total (<span id="warn-vcpu-count" style="font-weight:700;">0</span>).
+            Both sections must tally exactly before proceeding.
+          </span>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════
+         MANAGED SERVICES LIVE SIZING PANEL
+         ══════════════════════════════════════════════════════ -->
+<div class="live-sizing-section" id="ms-sizing-section" style="margin-top:18px;">
+  <div class="live-sizing-header" onclick="toggleMSSizing()">
+    <span class="live-sizing-title">⚙️ Managed Services Live Sizing
+      <span id="ms-rates-tab-ref" style="font-size:11px; font-weight:400; color:#a0c4e8; margin-left:8px;">— KPIs &amp; Rates pulled from <strong>Managed Services Rate Card</strong> tab</span>
+    </span>
+    <span class="live-sizing-controls">
+      <span id="ms-collapsed-total" style="display:none; font-size:13px; font-weight:700; color:#a0c4e8; margin-right:12px;">💰 Total: <span id="ms-collapsed-total-value">$0</span></span>
+      <span id="ms-sizing-label" class="live-sizing-label">Collapse</span>
+      <span id="ms-sizing-arrow" class="live-sizing-arrow">▲</span>
+    </span>
+  </div>
+
+  <div id="ms-sizing-body" class="live-sizing-body">
+
+    <!-- 2-column cards -->
+    <div class="ms-cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+
+      <!-- Card 1: US FTEs by OS -->
+      <div class="ms-card">
+        <div class="ms-card-header">🇺🇸 US FTEs by OS Role</div>
+        <table class="ms-card-table">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Servers</th>
+              <th>KPI (srv/FTE)</th>
+              <th>FTEs</th>
+              <th>Rate/Mo</th>
+              <th>Annual Cost</th>
+            </tr>
+          </thead>
+          <tbody id="ms-us-tbody">
+            <tr><td colspan="6" class="ms-loading">Enter server counts above to calculate…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Card 2: India FTEs by OS -->
+      <div class="ms-card">
+        <div class="ms-card-header">🇮🇳 India FTEs by OS Role</div>
+        <table class="ms-card-table">
+          <thead>
+            <tr>
+              <th>OS</th>
+              <th>Servers</th>
+              <th>KPI (srv/FTE)</th>
+              <th>FTEs</th>
+              <th>Rate/Mo</th>
+              <th>Annual Cost</th>
+            </tr>
+          </thead>
+          <tbody id="ms-india-tbody">
+            <tr><td colspan="6" class="ms-loading">Enter server counts above to calculate…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /.ms-cards-grid -->
+
+    <!-- Total Banner -->
+    <div id="ms-total-banner" style="background:#1a3a5c; color:#fff; padding:10px 14px; border-radius:6px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+      <span style="font-weight:600;">💰 Total Managed Services Annual Cost</span>
+      <span id="ms-total-value" style="font-size:16px; font-weight:700;">$0</span>
+    </div>
+
+  </div><!-- /#ms-sizing-body -->
+  </div><!-- /#ms-sizing-section -->
+        <!-- ══════════════════════════════════════════════════════
+             INFRASTRUCTURE COST LIVE SIZING PANEL
+             ══════════════════════════════════════════════════════ -->
+        <div class="live-sizing-section" id="infra-sizing-section" style="margin-top:18px;">
+          <div class="live-sizing-header" onclick="toggleInfraSizing()">
+            <span class="live-sizing-title">🖥️ Infrastructure Cost Live Sizing
+              <span id="infra-rates-tab-ref" style="font-size:11px; font-weight:400; color:#a0c4e8; margin-left:8px;">— Rates pulled from <strong>Infrastructure Rates</strong> tab</span>
+            </span>
+            <span class="live-sizing-controls">
+              <span id="infra-collapsed-total" style="display:none; font-size:13px; font-weight:700; color:#a0c4e8; margin-right:12px;">💰 Total: <span id="infra-collapsed-total-value">$0</span></span>
+              <span id="infra-sizing-label" class="live-sizing-label">Collapse</span>
+              <span id="infra-sizing-arrow" class="live-sizing-arrow">▲</span>
+            </span>
+          </div>
+          <div id="infra-sizing-body" class="live-sizing-body">
+            
+            <!-- Results Cards -->
+            <div class="ms-cards-grid" style="grid-template-columns: repeat(2, 1fr);">
+
+              <!-- Card: Compute Summary -->
+              <div class="ms-card">
+                <div class="ms-card-header">📊 Compute Summary</div>
+                <table class="ms-card-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th>Total Units</th>
+                      <th>Rate / Unit / Mo</th>
+                      <th>Monthly Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody id="infra-compute-tbody">
+                    <tr><td colspan="4" class="ms-loading">Enter server counts above to calculate…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Card: Cost Breakdown -->
+              <div class="ms-card">
+                <div class="ms-card-header">💵 Cost Breakdown</div>
+                <table class="ms-card-table">
+                  <thead>
+                    <tr>
+                      <th>Period</th>
+                      <th>vCPU Cost</th>
+                      <th>vRAM Cost</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="infra-cost-tbody">
+                    <tr><td colspan="4" class="ms-loading">Enter server counts above to calculate…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+            </div><!-- /.ms-cards-grid results -->
+
+            <!-- Total Banner -->
+            <div id="infra-total-banner" style="background:#1a3a5c; color:#fff; padding:10px 14px; border-radius:6px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+              <span style="font-weight:600;">💰 Total Infrastructure Annual Cost
+                <span id="infra-rate-source-badge" style="font-size:10px; font-weight:400; color:#a0c4e8; margin-left:8px;">(vCPU: <span id="infra-vcpu-rate-display">$8.00</span>/mo · vRAM: <span id="infra-vram-rate-display">$1.50</span>/GB/mo)</span>
+              </span>
+              <span id="infra-total-value" style="font-size:16px; font-weight:700;">$0</span>
+            </div>
+
+          </div><!-- /#infra-sizing-body -->
+        </div><!-- /#infra-sizing-section -->
+
+        <!-- VMware Applicable checkbox -->
+        <div class="vmware-row">
+          <label class="tower-checkbox-label">
+            <input type="checkbox" id="compute-vmware" onchange="toggleVmwareSizing()" />
+            VMware Applicable
+          </label>
+        </div>
+
+        <div class="live-sizing-section" id="vmware-sizing-panel" style="display:none; margin-top:18px;">
+          <div class="live-sizing-header" onclick="toggleVmwareSizingCollapse()">
+            <span class="live-sizing-title">⚡ VMware Live Sizing
+              <span id="vmware-rates-tab-ref" style="font-size:11px; font-weight:400; color:#a0c4e8; margin-left:8px;">— Rates pulled from <strong>VMware Rate Card</strong> tab</span>
+            </span>
+            <span class="live-sizing-controls">
+              <span id="vmware-collapsed-total" style="display:none; font-size:13px; font-weight:700; color:#a0c4e8; margin-right:12px;">💰 Total: <span id="vmware-collapsed-total-value">$0</span></span>
+              <span id="vmware-sizing-label" class="live-sizing-label">Collapse</span>
+              <span id="vmware-sizing-arrow" class="live-sizing-arrow">▲</span>
+            </span>
+          </div>
+
+          <div id="vmware-sizing-body" class="live-sizing-body">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+
+            <!-- VCF Block -->
+            <div style="background:#fff; border-radius:6px; padding:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <div style="font-size:12px; font-weight:700; color:#1a3a5c; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">&#9729; VCF (vSphere + vSAN)</div>
+              <div style="background:#e8f0fa; border-radius:5px; padding:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; text-align:center; margin-bottom:8px;">
+                <div>
+                  <div id="vcf-hosts" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Hosts</div>
+                </div>
+                <div>
+                  <div id="vcf-cores" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Total Cores</div>
+                </div>
+                <div>
+                  <div id="vcf-vcpus" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">vCPUs</div>
+                </div>
+              </div>
+              <div style="font-size:12px; color:#333; display:flex; justify-content:space-between;">
+                <span>Annual Cost</span>
+                <span id="vcf-annual" style="font-weight:700; color:#1a3a5c;">&#8211;</span>
+              </div>
+              <div style="font-size:11px; color:#777; margin-top:3px;">
+                Rate: <span id="vcf-rate-display">&#8211;</span>/core &nbsp;|&nbsp; Ratio: <span id="vcf-ratio-display">&#8211;</span>:1 vCPU
+              </div>
+            </div>
+
+            <!-- DFW Block -->
+            <div style="background:#fff; border-radius:6px; padding:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <div style="font-size:12px; font-weight:700; color:#1a3a5c; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">&#128274; Distributed Firewall</div>
+              <div style="background:#e8f0fa; border-radius:5px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px; text-align:center; margin-bottom:8px;">
+                <div>
+                  <div id="dfw-cores" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Physical Cores</div>
+                </div>
+                <div>
+                  <div id="dfw-cost" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Annual Cost</div>
+                </div>
+              </div>
+              <div style="font-size:12px; color:#333; display:flex; justify-content:space-between;">
+                <span>Annual Cost</span>
+                <span id="dfw-annual" style="font-weight:700; color:#1a3a5c;">&#8211;</span>
+              </div>
+              <div style="font-size:11px; color:#777; margin-top:3px;">
+                Rate: <span id="dfw-rate-display">&#8211;</span>/core
+              </div>
+            </div>
+
+            <!-- Live Recovery Block -->
+            <div style="background:#fff; border-radius:6px; padding:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <div style="font-size:12px; font-weight:700; color:#1a3a5c; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">&#128260; Live Recovery (DR)</div>
+
+              <!-- Dual input: # servers OR % of Prod servers -->
+              <div style="display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; margin-bottom:7px;">
+                <div>
+                  <label style="font-size:11px; color:#555; display:block; margin-bottom:2px;"># Prod Servers Protected</label>
+                  <input type="number" id="lr-vm-count" placeholder="e.g. 200" min="0"
+                    style="width:100%; padding:4px 7px; font-size:12px; border:1px solid #c8d8e8; border-radius:4px; box-sizing:border-box;"
+                    oninput="lrSyncFromCount()">
+                </div>
+                <div style="font-size:11px; color:#888; text-align:center; padding-top:16px;">or</div>
+                <div>
+                  <label style="font-size:11px; color:#555; display:block; margin-bottom:2px;">% of Prod Servers</label>
+                  <div style="display:flex; align-items:center; gap:3px;">
+                    <input type="number" id="lr-vm-pct" placeholder="e.g. 80" min="0" max="100" step="1"
+                      style="width:100%; padding:4px 7px; font-size:12px; border:1px solid #c8d8e8; border-radius:4px; box-sizing:border-box;"
+                      oninput="lrSyncFromPct()">
+                    <span style="font-size:12px; color:#555;">%</span>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:10px; color:#aaa; margin-bottom:7px;">
+                Based on <span id="lr-prod-total" style="font-weight:600; color:#1a3a5c;">0</span> total Prod servers
+              </div>
+
+              <div style="background:#e8f0fa; border-radius:5px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px; text-align:center; margin-bottom:8px;">
+                <div>
+                  <div id="lr-vms" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Protected VMs</div>
+                </div>
+                <div>
+                  <div id="lr-annual" style="font-size:18px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Annual Cost</div>
+                </div>
+              </div>
+              <div style="font-size:11px; color:#777;">
+                Rate: <span id="lr-rate-display">&#8211;</span>/VM/yr
+              </div>
+            </div>
+
+            <!-- Avi / NSX LB Block -->
+            <div style="background:#fff; border-radius:6px; padding:12px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+              <div style="font-size:12px; font-weight:700; color:#1a3a5c; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">&#9878; Avi / NSX Load Balancer</div>
+              <div style="margin-bottom:7px;">
+                <label style="font-size:11px; color:#555;">Peak Throughput (Gbps)</label>
+                <input type="number" id="avi-gbps" placeholder="e.g. 10" min="0" step="0.5"
+                  style="width:100%; padding:4px 7px; font-size:12px; border:1px solid #c8d8e8; border-radius:4px; margin-top:2px; box-sizing:border-box;"
+                  oninput="updateVmwareSizing()">
+              </div>
+              <div style="background:#e8f0fa; border-radius:5px; padding:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px; text-align:center; margin-bottom:8px;">
+                <div>
+                  <div id="avi-ses" style="font-size:22px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Service Engines</div>
+                </div>
+                <div>
+                  <div id="avi-annual" style="font-size:18px; font-weight:700; color:#1a3a5c;">&#8211;</div>
+                  <div style="font-size:10px; color:#555;">Annual Cost</div>
+                </div>
+              </div>
+              <div style="font-size:11px; color:#777;">
+                Rate: <span id="avi-rate-display">&#8211;</span>/SE/yr &nbsp;|&nbsp; <span id="avi-gbps-display">&#8211;</span> Gbps/SE
+              </div>
+            </div>
+
+          </div>
+
+          </div><!-- /#vmware-sizing-body -->
+
+          <!-- Total Banner -->
+          <div id="vmware-total-banner" style="background:#1a3a5c; color:#fff; padding:10px 14px; border-radius:0; margin-top:0; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+            <span style="font-weight:600;">⚡ Total VMware Annual Cost</span>
+            <span id="vmware-total-annual" style="font-size:16px; font-weight:700;">$0</span>
+          </div>
+        </div><!-- /#vmware-sizing-panel -->
+
+        
+      </div><!-- /#card-tower-compute -->
+
+      <!-- Midrange: Compute -->
+      <div class="card tower-card" id="card-tower-midrange" style="margin-top: 16px; display: none;">
+        <div class="card-title">Midrange: Compute</div>
+        <div class="card-subtitle">Capture servers in two sections. The first section (OS + Server Type) drives labor cost. The second section (Average vCPU/vRAM) drives infrastructure cost. Total counts in both sections must tally exactly. VMware components are bundled in the Midrange rate.</div>
+
+        <div class="compute-split">
+
+          <!-- LEFT: OS based Server Counts -->
+          <div class="compute-panel">
+            <div class="compute-section-title">OS based Server Counts</div>
+            <table class="compute-table">
+              <colgroup>
+                <col style="width: 32%;" />
+                <col style="width: 32%;" />
+                <col style="width: 28%;" />
+                <col style="width: 8%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="compute-th">Server OS</th>
+                  <th class="compute-th">Server Type</th>
+                  <th class="compute-th">Number of Servers</th>
+                  <th class="compute-th"></th>
+                </tr>
+              </thead>
+              <tbody id="midrange-os-tbody">
+                <tr class="compute-row">
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select">
+                        <option value="aix_lpar" selected>AIX LPAR</option>
+                        <option value="ibmi_lpar">IBMi LPAR</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select">
+                        <option value="prod" selected>Prod</option>
+                        <option value="nonprod">Non-Prod</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" oninput="updateMidrangeServerSummary()" />
+                  </td>
+                  <td class="compute-td" style="text-align:center;">
+                    <button class="delete-btn" onclick="deleteMidrangeOSRow(this)" title="Delete row">✕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button id="midrange-add-row-btn" class="add-row-btn" onclick="addMidrangeOSRow()">+ Add OS / Type Row</button>
+          </div><!-- /.compute-panel left -->
+
+          <div class="compute-divider"></div>
+
+          <!-- RIGHT: Average vCPU / vRAM based Server Counts -->
+          <div class="compute-panel">
+            <div class="compute-section-title">Average vCPU / vRAM based Server Counts</div>
+            <table class="compute-table">
+              <colgroup>
+                <col style="width: 28%;" />
+                <col style="width: 24%;" />
+                <col style="width: 24%;" />
+                <col style="width: 24%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="compute-th">Server OS</th>
+                  <th class="compute-th">Average vCPU</th>
+                  <th class="compute-th">Average vRAM</th>
+                  <th class="compute-th">Number of Servers</th>
+                </tr>
+              </thead>
+              <tbody id="midrange-vcpu-tbody">
+                <tr class="compute-row">
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select">
+                        <option value="aix_lpar" selected>AIX LPAR</option>
+                        <option value="ibmi_lpar">IBMi LPAR</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" />
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" />
+                  </td>
+                  <td class="compute-td" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" style="flex:1;" />
+                    <button class="delete-btn" onclick="deleteMidrangeVcpuRow(this)" title="Delete row">✕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button id="midrange-vcpu-add-row-btn" class="add-row-btn" onclick="addMidrangeVcpuRow()">+ Add OS / Type Row</button>
+          </div><!-- /.compute-panel right -->
+
+        </div><!-- /.compute-split -->
+      </div><!-- /#card-tower-midrange -->
+
+      <!-- Storage and Backup -->
+      <div class="card tower-card" id="card-tower-storage" style="margin-top: 16px; display: none;">
+        <div class="card-title">Storage and Backup</div>
+        <div class="card-subtitle">Capture storage capacity by architecture tier and workload type. Add a row for each combination in scope. Prod = customer-facing/revenue-generating workloads with full DR & backup. Non-Prod = Dev/Test/UAT/Staging environments.</div>
+
+        <div class="compute-split">
+
+          <div class="compute-panel storage-panel">
+            <div class="compute-section-title">Storage Inventory</div>
+            <table class="compute-table storage-table">
+              <colgroup>
+                <col style="width: 38%;" />
+                <col style="width: 24%;" />
+                <col style="width: 28%;" />
+                <col style="width: 10%;" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="compute-th">Storage Architecture</th>
+                  <th class="compute-th">Storage Type</th>
+                  <th class="compute-th">Storage in TBs</th>
+                  <th class="compute-th"></th>
+                </tr>
+              </thead>
+              <tbody id="storage-tbody">
+                <tr class="compute-row">
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select" onchange="updateStorageSummary()">
+                        <option value="san_high">SAN High Performance</option>
+                        <option value="san_standard">SAN Standard Performance</option>
+                        <option value="nas_high">NAS High Performance</option>
+                        <option value="nas_standard">NAS Standard Performance</option>
+                        <option value="object_storage">Object Storage</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <div class="select-wrapper">
+                      <select class="compute-select" onchange="updateStorageSummary()">
+                        <option value="prod">Prod</option>
+                        <option value="nonprod">Non-Prod</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="compute-td">
+                    <input type="number" class="compute-number" value="0" min="0" step="1" oninput="updateStorageSummary()" />
+                  </td>
+                  <td class="compute-td" style="text-align:center;">
+                    <button class="delete-btn" onclick="deleteStorageRow(this)" title="Delete row">✕</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <button class="add-row-btn" onclick="addStorageRow()">+ Add Storage Row</button>
+            <div class="storage-summary">
+              Total: <strong id="storage-total-tb">0</strong> TB · Prod: <strong id="storage-prod-tb">0</strong> · Non-Prod: <strong id="storage-nonprod-tb">0</strong>
+            </div>
+            <div class="field-hint" style="margin-top: 10px;">
+              Enter capacity in TBs (terabytes) as whole numbers. Each row represents one Architecture × Type combination.
+            </div>
+          </div><!-- /.compute-panel -->
+
+          <div class="compute-divider"></div>
+
+          <div class="compute-panel storage-panel">
+            <div class="compute-section-title">Backup — Auto-calculated</div>
+            <div class="info-box">
+              Backup: FEP ratio = 3 : 1. Object Storage is excluded from FEP.
+            </div>
+            <div class="storage-backup-field">
+              <label class="field-label" for="backup-fed-tb">Front End Protected Backup (TB)</label>
+              <input id="backup-fed-tb" type="number" class="readonly-input" value="0" readonly />
+              <div class="field-hint">Sum of all Prod storage, excluding Object Storage.</div>
+            </div>
+            <div class="storage-backup-field">
+              <label class="field-label" for="backup-storage-tb">Backup Storage Capacity (TB)</label>
+              <input id="backup-storage-tb" type="number" class="readonly-input" value="0" readonly />
+              <div class="field-hint">Front End Protected Backup × 3 (3 : 1 ratio).</div>
+            </div>
+          </div><!-- /.compute-panel -->
+
+        </div><!-- /.compute-split -->
+      </div><!-- /#card-tower-storage -->
+
+      <!-- Network -->
+      <div class="card tower-card" id="card-tower-network" style="margin-top: 16px; display: none;">
+        <div class="card-title">Network — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Network towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="network-devices">Total Network Devices</label>
+              <input type="number" id="network-devices" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total managed network devices including switches, routers, and firewalls.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="network-sites">Total Sites / Locations</label>
+              <input type="number" id="network-sites" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Number of physical locations covered by the network scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-network -->
+
+      <!-- Database and Middleware -->
+      <div class="card tower-card" id="card-tower-database" style="margin-top: 16px; display: none;">
+        <div class="card-title">Database and Middleware — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Database and Middleware towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="db-instances">Total Database Instances</label>
+              <input type="number" id="db-instances" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total number of database instances (Oracle, SQL Server, etc.) in scope.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="mw-instances">Total Middleware Instances</label>
+              <input type="number" id="mw-instances" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total middleware instances (WebLogic, MQ, etc.) in scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-database -->
+
+      <!-- Mainframe -->
+      <div class="card tower-card" id="card-tower-mainframe" style="margin-top: 16px; display: none;">
+        <div class="card-title">Mainframe — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Mainframe towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="mf-mips">Total MIPS / MSU</label>
+              <input type="number" id="mf-mips" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total mainframe capacity in MIPS or MSU units under management.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="mf-lpars">Total Mainframe LPARs</label>
+              <input type="number" id="mf-lpars" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total number of logical partitions on mainframe systems in scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-mainframe -->
+
+      <!-- Security Services -->
+      <div class="card tower-card" id="card-tower-security" style="margin-top: 16px; display: none;">
+        <div class="card-title">Security Services — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Security Services towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="security-scope">Security Services Scope</label>
+              <input type="number" id="security-scope" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total number of security service units or systems in scope.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="security-users">Total Users / Identities</label>
+              <input type="number" id="security-users" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total number of users, identities, or endpoints covered by security services.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-security -->
+
+      <!-- Tools -->
+      <div class="card tower-card" id="card-tower-tools" style="margin-top: 16px; display: none;">
+        <div class="card-title">Tools — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Tools towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="tools-count">Total Tools / Platforms</label>
+              <input type="number" id="tools-count" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Number of tools, platforms, or automation products in scope.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="tools-users">Total Tool Users</label>
+              <input type="number" id="tools-users" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Number of users or seats supported by the tools in scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-tools -->
+
+      <!-- PMO/SMO/Governance -->
+      <div class="card tower-card" id="card-tower-pmo" style="margin-top: 16px; display: none;">
+        <div class="card-title">PMO/SMO/Governance — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for PMO/SMO/Governance towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="pmo-projects">Total Projects / Programs</label>
+              <input type="number" id="pmo-projects" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total number of projects, programs, or initiatives in scope.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="pmo-staff">Total PMO/SMO Staff</label>
+              <input type="number" id="pmo-staff" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Number of PMO/SMO/Governance staff members supporting the scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-pmo -->
+
+      <!-- Datacenter -->
+      <div class="card tower-card" id="card-tower-datacenter" style="margin-top: 16px; display: none;">
+        <div class="card-title">Datacenter — Inputs</div>
+        <div class="card-subtitle">Enter the environment parameters for Datacenter towers.</div>
+        <table class="inputs-table">
+          <colgroup>
+            <col class="col-input" />
+            <col class="col-hint" />
+          </colgroup>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="datacenter-sites">Total Datacenter Sites</label>
+              <input type="number" id="datacenter-sites" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Number of datacenters or data halls included in scope.</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="td-input">
+              <label class="field-label" for="datacenter-racks">Total Racks / Pods</label>
+              <input type="number" id="datacenter-racks" value="" min="0" step="1" placeholder="0" />
+            </td>
+            <td class="td-hint">
+              <span class="field-hint">Total racks, pods, or cabinets covered by the datacenter scope.</span>
+            </td>
+          </tr>
+        </table>
+      </div><!-- /#card-tower-datacenter -->
+
+    </div><!-- /#panel-inputs -->
+
+    <!-- ── TAB: Infrastructure Rates ── -->
+<div id="panel-infra-rates" class="tab-panel" role="tabpanel">
+  <div style="overflow-x:auto; width:100%; margin-top:10px;">
+    <table id="infra-rates-table"
+           style="table-layout:fixed; width:100%; border-collapse:collapse;
+                  font-family:Arial,sans-serif; font-size:12px;">
+
+      <colgroup>
+        <col style="width:260px"> <!-- Tower / Service -->
+        <col style="width:220px"> <!-- Infra Component -->
+        <col style="width:160px"> <!-- Per Month Rate -->
+        <col style="width:220px"> <!-- UOM -->
+      </colgroup>
+
+      <thead>
+        <tr style="background:#1a3c6e; color:#fff; position:sticky; top:0; z-index:2;">
+          <th style="padding:6px 8px; text-align:left;  border:1px solid #0f2a52; white-space:nowrap;">Tower / Service</th>
+          <th style="padding:6px 8px; text-align:left;  border:1px solid #0f2a52; white-space:nowrap;">Infra Component</th>
+          <th style="padding:6px 8px; text-align:right; border:1px solid #0f2a52; white-space:nowrap;">Per Month Rate</th>
+          <th style="padding:6px 8px; text-align:left;  border:1px solid #0f2a52; white-space:nowrap;">UOM</th>
+        </tr>
+      </thead>
+
+      <tbody id="infra-rates-tbody">
+
+        <!-- ════════════════════════════════════════════════════
+             🖥 DISTRIBUTED SERVICE: COMPUTE
+             ════════════════════════════════════════════════════ -->
+        <tr>
+          <td colspan="4" style="background:#d6e4f7; color:#1a3c6e; font-weight:bold;
+              padding:5px 8px; border:1px solid #aac4e8; font-size:12px;">
+            🖥 Distributed Service: Compute
+          </td>
+        </tr>
+
+        <tr style="background:#f9fbff;">
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">Compute Infra Rates</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">vCPU</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">$8.00</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">per vCPU per month</td>
+        </tr>
+
+        <tr style="background:#ffffff;">
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">Compute Infra Rates</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">vRAM</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">$1.50</td>
+          <td style="padding:5px 8px; border:1px solid #dce6f4;">per vRAM per month</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+   <!-- ── TAB: FTE KPIs ── -->
+    <div id="panel-fte-kpis" class="tab-panel" role="tabpanel">
+      <div style="padding:18px;">
+
+        <!-- Header -->
+        <div style="margin-bottom:6px;">
+          <div style="font-size:15px; font-weight:700; color:#1a3a5c;">FTE KPI Benchmarks</div>
+          <div style="font-size:12px; color:#555; margin-top:2px;">Industry benchmarks for FTE productivity — used for staffing validation across towers</div>
+        </div>
+
+        <!-- ── Section 1: iSG Inform Pricing Trend ── -->
+        <div style="margin-bottom:22px;">
+          <div style="font-size:13px; font-weight:700; color:#1a3a5c; margin-bottom:6px;">iSG Inform Pricing Trend</div>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#1a3a5c; color:#fff; text-transform:uppercase; font-size:11px; letter-spacing:0.4px;">
+                <th style="padding:8px 10px; text-align:left; font-weight:600;">Tower</th>
+                <th style="padding:8px 10px; text-align:left; font-weight:600;">Unit of Measure</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Lower Quartile</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Upper Quartile</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Median (Calculated)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Mainframe</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of configured MIPS per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">689</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,444</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">1,067</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Window Servers</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">OS instances per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">134</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">230</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">182</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Linux Servers</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">OS instances per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">352</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">639</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">496</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Unix Servers</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">OS instances per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">55</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">97</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">76</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Storage</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of installed TBs per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">873</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,562</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">1,218</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Network LAN</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of active LAN ports per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">4,515</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">8,111</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">6,313</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Network WAN</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of locations per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">132</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">230</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">181</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Network Voice</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of voice endpoints per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,710</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">3,923</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">2,817</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Workplace Services</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of workplace devices per user</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">452</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">674</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">563</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Service Desk</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of tickets per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">655</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,123</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">889</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Section 2: Internal Calculation from PB ── -->
+        <div style="margin-bottom:22px;">
+          <div style="font-size:13px; font-weight:700; color:#1a3a5c; margin-bottom:6px;">Internal Calculation from PB</div>
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#1a3a5c; color:#fff; text-transform:uppercase; font-size:11px; letter-spacing:0.4px;">
+                <th style="padding:8px 10px; text-align:left; font-weight:600;">Tower</th>
+                <th style="padding:8px 10px; text-align:left; font-weight:600;">Unit of Measure</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Lower Quartile</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Upper Quartile</th>
+                <th style="padding:8px 10px; text-align:center; font-weight:600;">Median (Calculated)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Hypervisor</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">ESX Hosts per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">189</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">213</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">283</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Backup</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of TBs per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,063</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">1,500</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">1,215</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">SQL Database</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of DB Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">93</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">170</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Oracle Database</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of DB Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">50</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">65</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">94</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">DB2 Database</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of DB Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">41</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">52</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">74</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Standard Switch</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Switch Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">142</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">170</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">170</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Complex Switch</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Switch Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">142</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">142</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Very Complex Switch</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Switch Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">106</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">142</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Standard Router</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Router Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">142</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Complex Router</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Router Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">77</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">85</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">94</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Very Complex Router</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of Router Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">71</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">77</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">85</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Standard Firewall</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of FW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">106</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">170</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Complex Firewall</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of FW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">60</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">77</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">94</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Very Complex Firewall</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of FW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">36</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">43</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">57</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Load Balancer</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of LB per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">94</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">122</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">142</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Middleware (Web Server)</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of MW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">213</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">283</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">425</td>
+              </tr>
+              <tr style="background:#fff;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Middleware (Web Application Server)</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of MW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">196</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">255</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">365</td>
+              </tr>
+              <tr style="background:#f7fafd;">
+                <td style="padding:8px 10px; color:#1a3a5c; font-weight:500; border-bottom:1px solid #e0e8f0;">Middleware (Cloud Application Server)</td>
+                <td style="padding:8px 10px; color:#444; border-bottom:1px solid #e0e8f0;">Number of MW Instance per FTE</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">232</td>
+                <td style="padding:8px 10px; text-align:center; border-bottom:1px solid #e0e8f0;">319</td>
+                <td style="padding:8px 10px; text-align:center; font-weight:600; color:#1a3a5c; border-bottom:1px solid #e0e8f0;">425</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer note -->
+        <div style="font-size:11px; color:#888; border-top:1px solid #e0e8f0; padding-top:8px; margin-top:4px;">
+          &#9432; iSG Inform benchmarks are based on industry pricing trend data. Internal PB benchmarks are derived from internal calculation references.
+        </div>
+
+      </div>
+    </div>
+
+   <!-- ── TAB: Managed Services Rates ── -->
+<div id="panel-managed-services" class="tab-panel" role="tabpanel">
+<!-- ===== MANAGED SERVICES RATES TABLE (Updated Rates) ===== -->
+<div style="overflow-x:auto; width:100%; margin-top:10px;">
+  <table id="ms-rates-table"
+         style="table-layout:fixed; width:100%; border-collapse:collapse;
+                font-family:Arial,sans-serif; font-size:12px;">
+
+    <colgroup>
+      <col style="width:200px"> <!-- Tower -->
+      <col style="width:280px"> <!-- Description -->
+      <col style="width:220px"> <!-- Role -->
+      <col style="width:110px"> <!-- Delivered From -->
+      <col style="width:130px"> <!-- Monthly Typical Price -->
+      <col style="width:110px"> <!-- Confidence Level -->
+      <col style="width:150px"> <!-- Discounted Monthly Rate -->
+    </colgroup>
+
+    <thead>
+      <tr style="background:#1a3c6e; color:#fff; position:sticky; top:0; z-index:2;">
+        <th style="padding:6px 8px; text-align:left;   border:1px solid #0f2a52; white-space:nowrap;">Tower</th>
+        <th style="padding:6px 8px; text-align:left;   border:1px solid #0f2a52; white-space:nowrap;">Description</th>
+        <th style="padding:6px 8px; text-align:left;   border:1px solid #0f2a52; white-space:nowrap;">Role</th>
+        <th style="padding:6px 8px; text-align:left;   border:1px solid #0f2a52; white-space:nowrap;">Delivered From</th>
+        <th style="padding:6px 8px; text-align:right;  border:1px solid #0f2a52; white-space:nowrap;">Monthly Typical Price</th>
+        <th style="padding:6px 8px; text-align:center; border:1px solid #0f2a52; white-space:nowrap;">Confidence Level</th>
+        <th style="padding:6px 8px; text-align:right;  border:1px solid #0f2a52; white-space:nowrap;">Discounted / Mo (63%)</th>
+      </tr>
+    </thead>
+
+    <tbody id="ms-rates-tbody">
+
+      <!-- ════════════════════════════════════════════════════════
+           📍 UNITED STATES
+           ════════════════════════════════════════════════════════ -->
+      <tr>
+        <td colspan="7" style="background:#d6e4f7; color:#1a3c6e; font-weight:bold;
+            padding:5px 8px; border:1px solid #aac4e8; font-size:12px;">
+          📍 US-Based Resources
+        </td>
+      </tr>
+
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">WINDOW SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Windows)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$16,648</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$10,405</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">LINUX SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Linux)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$17,388</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$10,868</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">UNIX SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Unix/AIX)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$19,132</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,957</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">HYPERVISOR</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Hypervisor</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$22,304</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,940</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STORAGE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Storage</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$18,357</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,473</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">BACK UP</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Backup</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$16,648</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$10,405</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">SQL DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (SQL - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$18,327</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,454</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">ORACLE DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (Oracle - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$20,684</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$12,928</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DB2 DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (DB2 - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$21,193</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,245</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$18,357</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,473</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$19,055</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,910</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$21,189</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,243</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$18,357</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,473</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$19,055</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,910</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$21,189</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,243</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$22,304</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,940</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$23,152</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$14,470</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$25,744</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$16,090</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">LOAD BALANCER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Load Balancer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$22,304</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$13,940</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (WEB SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Web Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$16,648</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$10,405</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (WEB APPLICATION SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Web Application Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$19,983</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$12,489</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (CLOUD APPLICATION SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Cloud Application Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$19,132</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$11,957</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MAINFRAME</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Mainframe</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">United States</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$25,744</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1a3c6e;">\$16,090</td>
+      </tr>
+
+      <!-- ════════════════════════════════════════════════════════
+           📍 INDIA
+           ════════════════════════════════════════════════════════ -->
+      <tr>
+        <td colspan="7" style="background:#e8f5e9; color:#1b5e20; font-weight:bold;
+            padding:5px 8px; border:1px solid #a5d6a7; font-size:12px;">
+          📍 India-Based Resources
+        </td>
+      </tr>
+
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">WINDOW SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Windows)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,199</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,249</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">LINUX SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Linux)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,537</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,461</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">UNIX SERVERS</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed OS (Unix/AIX)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,975</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1b5e20;">\$3,734</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">HYPERVISOR</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Hypervisor</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,272</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,920</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STORAGE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Storage</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,162</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,226</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">BACK UP</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Backup</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,199</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,249</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">SQL DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (SQL - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,384</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,365</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">ORACLE DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (Oracle - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,076</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,798</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DB2 DATABASE</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Database (DB2 - Business Medium Complex)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">DBA</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,388</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,992</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,162</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,226</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,422</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,389</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX SWITCH</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Switch - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,371</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,982</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,162</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,226</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$5,422</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,389</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX ROUTER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Router - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,371</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,982</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">STANDARD FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Standard</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,272</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$3,920</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">COMPLEX FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">\$6,588</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">\$4,117</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">VERY COMPLEX FIREWALL</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Firewall - Very Complex</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$7,741</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$4,838</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">LOAD BALANCER</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Load Balancer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$6,272</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$3,920</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (WEB SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Web Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$5,199</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$3,249</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (WEB APPLICATION SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Web Application Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$6,363</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$3,977</td>
+      </tr>
+      <tr style="background:#ffffff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MIDDLEWARE (CLOUD APPLICATION SERVER)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Middleware (Cloud Application Server)</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems &amp; Application Administrator</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$5,975</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">Very High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$3,734</td>
+      </tr>
+      <tr style="background:#f9fbff;">
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">MAINFRAME</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Managed Mainframe</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">Systems/Network &amp; Platform Engineer</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4;">India</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right;">$7,741</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:center;">High</td>
+        <td style="padding:5px 8px; border:1px solid #dce6f4; text-align:right; font-weight:bold; color:#1b5e20;">$4,838</td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+</div> 
+<!-- ===== END MANAGED SERVICES RATES TABLE ===== -->
+   <!-- ── TAB: VMware Rate Card ── -->
+    <div id="panel-vmware-rate" class="tab-panel" role="tabpanel">
+      <div class="card" style="max-width:860px;margin:0 auto;">
+
+        <!-- Title -->
+        <div class="card-title">VMware Licensing Rate Card</div>
+        <div class="card-subtitle" style="margin-bottom:18px;">
+          Broadcom per-core annual pricing — rates reflect 20% discounted tier used in estimator
+        </div>
+
+        <!-- ── Edition Pricing ── -->
+        <div style="font-size:12px;font-weight:700;color:#1a2535;margin-bottom:8px;">Edition Pricing</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+          <colgroup>
+            <col style="width:34%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+          </colgroup>
+          <thead>
+            <tr style="background:#f0f2f5;">
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">VMWARE EDITION</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">LIST PRICE (PER CORE/YEAR)</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">25% DISCOUNTED RATE</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">USED IN ESTIMATOR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">VMware Cloud Foundation (VCF)</td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">$350</td>
+              <td style="font-size:12px;font-weight:600;color:#3b82f6;padding:7px 10px;border:1px solid #dde3ea;"><input type="number" id="rate-vcf" value="262.50" step="0.01" min="0" style="width:90px;font-size:12px;font-weight:600;color:#3b82f6;border:1px solid #bcd0f0;border-radius:4px;padding:2px 6px;" /></td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">✓ (applied when VMware = Yes)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:#6b7a90;margin-bottom:18px;font-style:italic;">
+          VMware Cloud Foundation (VCF) is the standard edition applied whenever VMware is marked as applicable in Step 2.
+        </div>
+
+        <!-- ── VMware Live Recovery ── -->
+        <div style="font-size:12px;font-weight:700;color:#1a2535;margin-bottom:8px;">VMware Live Recovery</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+          <colgroup>
+            <col style="width:34%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+          </colgroup>
+          <thead>
+            <tr style="background:#f0f2f5;">
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">VMWARE LIVE RECOVERY</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">LIST PRICE (PER PROTECTED VM/YEAR)</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">20% DISCOUNTED RATE</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">USED IN ESTIMATOR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">VMware Live Recovery</td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">$300.00</td>
+              <td style="font-size:12px;font-weight:600;color:#3b82f6;padding:7px 10px;border:1px solid #dde3ea;"><input type="number" id="rate-lr" value="240.00" step="0.01" min="0" style="width:90px;font-size:12px;font-weight:600;color:#3b82f6;border:1px solid #bcd0f0;border-radius:4px;padding:2px 6px;" /></td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">✓ (applied only when "VMware Applicable" is checked and a protection count is provided)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:#6b7a90;margin-bottom:18px;font-style:italic;">
+          Discount range: 0% – 40% (20% used in estimator). Live Recovery cost = (# of Prod Servers Protected) × $240/year.
+        </div>
+
+        <!-- ── VMware Distributed Firewall ── -->
+        <div style="font-size:12px;font-weight:700;color:#1a2535;margin-bottom:8px;">VMware Distributed Firewall (Per Physical Core Pricing)</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+          <colgroup>
+            <col style="width:34%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+            <col style="width:22%;" />
+          </colgroup>
+          <thead>
+            <tr style="background:#f0f2f5;">
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">VMWARE DISTRIBUTED FIREWALL</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">LIST PRICE (PER PHYSICAL CORE/YEAR)</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">20% DISCOUNTED RATE</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">USED IN ESTIMATOR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">Distributed FW per Physical Core / Year</td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">$120.00</td>
+              <td style="font-size:12px;font-weight:600;color:#3b82f6;padding:7px 10px;border:1px solid #dde3ea;"><input type="number" id="rate-dfw" value="96.00" step="0.01" min="0" style="width:90px;font-size:12px;font-weight:600;color:#3b82f6;border:1px solid #bcd0f0;border-radius:4px;padding:2px 6px;" /></td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">✓ applied only when "VMware Applicable" is checked</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:#6b7a90;margin-bottom:18px;font-style:italic;">
+          Discount range: 15% – 35% (20% used in estimator). Distributed Firewall cost = (Cores to License from VCF sizing) × $96/year.
+        </div>
+
+        <!-- ── VMware Avi / NSX Load Balancer ── -->
+        <div style="font-size:12px;font-weight:700;color:#1a2535;margin-bottom:8px;">VMware Avi / NSX Load Balancer (Service Engine Pricing)</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+          <colgroup>
+            <col style="width:28%;" />
+            <col style="width:24%;" />
+            <col style="width:24%;" />
+            <col style="width:24%;" />
+          </colgroup>
+          <thead>
+            <tr style="background:#f0f2f5;">
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">VMWARE AVI / NSX LOAD BALANCER</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">LIST PRICE (PER SERVICE ENGINE CORE/YEAR)</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">30% DISCOUNTED RATE (AVI BASIC)</th>
+              <th style="font-size:11px;font-weight:600;color:#6b7a90;padding:7px 10px;text-align:left;border:1px solid #dde3ea;">USED IN ESTIMATOR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">Avi Enterprise per Service Engine Core / Year</td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">$3,500.00</td>
+              <td style="font-size:12px;font-weight:600;color:#3b82f6;padding:7px 10px;border:1px solid #dde3ea;"><input type="number" id="rate-avi" value="2450.00" step="0.01" min="0" style="width:90px;font-size:12px;font-weight:600;color:#3b82f6;border:1px solid #bcd0f0;border-radius:4px;padding:2px 6px;" /></td>
+              <td style="font-size:12px;color:#1a2535;padding:7px 10px;border:1px solid #dde3ea;">✓ (applied only when "VMware Applicable" is checked and Peak Throughput is provided). Annual cost = SE Required × $2,450.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:#6b7a90;margin-bottom:18px;font-style:italic;">
+          Sizing rule: 1 Service Engine handles up to 1.5 Gbps of peak throughput. Service Engines Required = ⌈ Peak Throughput (Gbps) ÷ 1.5 ⌉. Annual cost = SE Required × $2,450.
+        </div>
+
+        <!-- ── Host & Licensing Sizing Constants ── -->
+        <div style="font-size:12px;font-weight:700;color:#1a2535;margin-bottom:10px;">Host &amp; Licensing Sizing Constants</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+          <colgroup>
+            <col style="width:55%;" />
+            <col style="width:45%;" />
+          </colgroup>
+          <tbody>
+            <tr style="border-bottom:1px solid #f0f2f5;">
+              <td style="font-size:12px;color:#374151;font-weight:500;padding:8px 10px 8px 0;">vCPU to Physical Core Ratio</td>
+              <td style="font-size:12px;color:#1a2535;padding:8px 0;">2.5 : 1</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f2f5;">
+              <td style="font-size:12px;color:#374151;font-weight:500;padding:8px 10px 8px 0;">RAM Overcommit Ratio</td>
+              <td style="font-size:12px;color:#1a2535;padding:8px 0;">0.7 : 1 <span style="color:#6b7a90;">(physical : virtual)</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f2f5;">
+              <td style="font-size:12px;color:#374151;font-weight:500;padding:8px 10px 8px 0;">HA / Failover Headroom</td>
+              <td style="font-size:12px;color:#1a2535;padding:8px 0;">0%</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f2f5;">
+              <td style="font-size:12px;color:#374151;font-weight:500;padding:8px 10px 8px 0;">Physical Cores per Host</td>
+              <td style="font-size:12px;color:#1a2535;padding:8px 0;">32 cores</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;color:#374151;font-weight:500;padding:8px 10px 8px 0;">RAM per Host</td>
+              <td style="font-size:12px;color:#1a2535;padding:8px 0;">1,024 GB</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="font-size:11px;color:#6b7a90;font-style:italic;">
+          VMware cores are licensed at the host level. The estimator rounds up to the nearest whole host using the ceiling function.
+        </div>
+
+      </div><!-- /.card -->
+    </div>
+
+    <!-- ── TAB: TCO Analysis ── -->
+    <div id="panel-tco-analysis" class="tab-panel" role="tabpanel">
+      <div class="placeholder-content">
+        TCO Analysis content will appear here.</div>
+    </div>
+
+    <!-- ── TAB: Calculation Steps ── -->
+    <div id="panel-calc-steps" class="tab-panel" role="tabpanel">
+      <div class="placeholder-content">
+        Calculation Steps content will appear here.
+      </div>
+    </div>
+
+    <!-- ── TAB: Executive Brief ── -->
+    <div id="panel-exec-brief" class="tab-panel" role="tabpanel">
+      <div class="placeholder-content">
+        Executive Brief content will appear here.
+      </div>
+    </div>
+
+  </div><!-- /.content-area -->
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════ -->
+  <script>
+    /* ── Tab switching ── */
+    function switchTab(tabId, el) {
+      // Deactivate all tabs
+      document.querySelectorAll('.tab[data-tab]').forEach(function(t) {
+        t.classList.remove('active');
+      });
+      // Deactivate all panels
+      document.querySelectorAll('.tab-panel').forEach(function(p) {
+        p.classList.remove('active');
+      });
+      // Activate clicked tab
+      el.classList.add('active');
+      // Activate matching panel
+      var panel = document.getElementById('panel-' + tabId);
+      if (panel) {
+        panel.classList.add('active');
+      }
+    }
+
+    /* ── US / India delivery sync ── */
+    function syncDelivery(changed) {
+      var usInput     = document.getElementById('usDelivery');
+      var indiaInput  = document.getElementById('indiaDelivery');
+
+      var usVal    = parseFloat(usInput.value);
+      var indiaVal = parseFloat(indiaInput.value);
+
+      if (changed === 'us') {
+        if (isNaN(usVal) || usVal < 0)  usVal = 0;
+        if (usVal > 100)                usVal = 100;
+        usInput.value    = usVal;
+        indiaInput.value = 100 - usVal;
+      } else {
+        if (isNaN(indiaVal) || indiaVal < 0) indiaVal = 0;
+        if (indiaVal > 100)                  indiaVal = 100;
+        indiaInput.value = indiaVal;
+        usInput.value    = 100 - indiaVal;
+      }
+    }
+
+    /* ── Distributed Compute: Add / Delete Rows ── */
+    function addComputeOSRow() {
+      var tbody = document.getElementById('compute-os-tbody');
+      var row = document.createElement('tr');
+      row.className = 'compute-row';
+      row.innerHTML =
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select">' +
+              '<option value="windows" selected>Windows</option>' +
+              '<option value="linux">Linux</option>' +
+              '<option value="unix">Unix/AIX</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select">' +
+              '<option value="prod" selected>Prod</option>' +
+              '<option value="nonprod">Non-Prod</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" oninput="validateComputeCounts()" />' +
+        '</td>' +
+        '<td class="compute-td" style="text-align:center;">' +
+          '<button class="delete-btn" onclick="deleteComputeOSRow(this)" title="Delete row">\u2715</button>' +
+        '</td>';
+      tbody.appendChild(row);
+      /* attach validation to new input */
+      tbody.querySelectorAll('tr:last-child .compute-number').forEach(function(inp) {
+        inp.addEventListener('input', validateComputeCounts);
+      });
+    }
+
+    function deleteComputeOSRow(btn) {
+      var tbody = document.getElementById('compute-os-tbody');
+      if (tbody.rows.length <= 1) return; /* keep at least 1 row */
+      var row = btn.closest('tr');
+      if (row) {
+        row.remove();
+        validateComputeCounts();
+        updateComputeServerSummary();
+      }
+    }
+
+    function updateMidrangeAddButton() {
+      var tbody = document.getElementById('midrange-os-tbody');
+      var button = document.getElementById('midrange-add-row-btn');
+      if (!button) return;
+      button.disabled = tbody.rows.length >= 2;
+      button.style.opacity = button.disabled ? '0.65' : '1';
+      button.style.cursor = button.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    function addMidrangeOSRow() {
+      var tbody = document.getElementById('midrange-os-tbody');
+      if (tbody.rows.length >= 2) return;
+      var row = document.createElement('tr');
+      row.className = 'compute-row';
+      row.innerHTML =
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select">' +
+              '<option value="aix_lpar" selected>AIX LPAR</option>' +
+              '<option value="ibmi_lpar">IBMi LPAR</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select">' +
+              '<option value="prod" selected>Prod</option>' +
+              '<option value="nonprod">Non-Prod</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" />' +
+        '</td>' +
+        '<td class="compute-td" style="text-align:center;">' +
+          '<button class="delete-btn" onclick="deleteMidrangeOSRow(this)" title="Delete row">\u2715</button>' +
+        '</td>';
+      tbody.appendChild(row);
+      updateMidrangeAddButton();
+    }
+
+    function deleteMidrangeOSRow(btn) {
+      var tbody = document.getElementById('midrange-os-tbody');
+      if (tbody.rows.length <= 1) return;
+      var row = btn.closest('tr');
+      if (row) {
+        row.remove();
+        updateMidrangeAddButton();
+        updateMidrangeServerSummary();
+        updateMidrangeServerSummary();
+      }
+    }
+
+    function updateMidrangeVcpuButton() {
+      var tbody = document.getElementById('midrange-vcpu-tbody');
+      var button = document.getElementById('midrange-vcpu-add-row-btn');
+      if (!button) return;
+      button.disabled = tbody.rows.length >= 2;
+      button.style.opacity = button.disabled ? '0.65' : '1';
+      button.style.cursor = button.disabled ? 'not-allowed' : 'pointer';
+    }
+
+    function addMidrangeVcpuRow() {
+      var tbody = document.getElementById('midrange-vcpu-tbody');
+      if (tbody.rows.length >= 2) return;
+      var row = document.createElement('tr');
+      row.className = 'compute-row';
+      row.innerHTML =
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select">' +
+              '<option value="aix_lpar" selected>AIX LPAR</option>' +
+              '<option value="ibmi_lpar">IBMi LPAR</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" />' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" />' +
+        '</td>' +
+        '<td class="compute-td" style="display:flex; align-items:center; justify-content:space-between; gap:8px;">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" style="flex:1;" />' +
+          '<button class="delete-btn" onclick="deleteMidrangeVcpuRow(this)" title="Delete row">\u2715</button>' +
+        '</td>';
+      tbody.appendChild(row);
+      updateMidrangeVcpuButton();
+    }
+
+    function deleteMidrangeVcpuRow(btn) {
+      var tbody = document.getElementById('midrange-vcpu-tbody');
+      if (tbody.rows.length <= 1) return;
+      var row = btn.closest('tr');
+      if (row) {
+        row.remove();
+        updateMidrangeVcpuButton();
+      }
+    }
+
+    function updateServerSummary(tbodyId, totalId, prodId, nonprodId) {
+      var total = 0;
+      var prod = 0;
+      var nonprod = 0;
+      document.querySelectorAll('#' + tbodyId + ' tr').forEach(function(row) {
+        var selects = row.querySelectorAll('select');
+        var input = row.querySelector('input[type="number"]');
+        var count = parseFloat(input && input.value) || 0;
+        total += count;
+        if (selects.length >= 2) {
+          if (selects[1].value === 'prod') {
+            prod += count;
+          } else if (selects[1].value === 'nonprod') {
+            nonprod += count;
+          }
+        }
+      });
+      document.getElementById(totalId).textContent = total;
+      document.getElementById(prodId).textContent = prod;
+      document.getElementById(nonprodId).textContent = nonprod;
+    }
+
+    function updateComputeServerSummary() {
+      updateServerSummary('compute-os-tbody', 'compute-total-servers', 'compute-prod-servers', 'compute-nonprod-servers');
+    }
+
+    function updateMidrangeServerSummary() {
+      updateServerSummary('midrange-os-tbody', 'midrange-total-servers', 'midrange-prod-servers', 'midrange-nonprod-servers');
+    }
+
+    function addStorageRow() {
+      var tbody = document.getElementById('storage-tbody');
+      var row = document.createElement('tr');
+      row.className = 'compute-row';
+      row.innerHTML =
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select" onchange="updateStorageSummary()">' +
+              '<option value="san_high">SAN High Performance</option>' +
+              '<option value="san_standard">SAN Standard Performance</option>' +
+              '<option value="nas_high">NAS High Performance</option>' +
+              '<option value="nas_standard">NAS Standard Performance</option>' +
+              '<option value="object_storage">Object Storage</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<div class="select-wrapper">' +
+            '<select class="compute-select" onchange="updateStorageSummary()">' +
+              '<option value="prod">Prod</option>' +
+              '<option value="nonprod">Non-Prod</option>' +
+            '</select>' +
+          '</div>' +
+        '</td>' +
+        '<td class="compute-td">' +
+          '<input type="number" class="compute-number" value="0" min="0" step="1" oninput="updateStorageSummary()" />' +
+        '</td>' +
+        '<td class="compute-td" style="text-align:center;">' +
+          '<button class="delete-btn" onclick="deleteStorageRow(this)" title="Delete row">\u2715</button>' +
+        '</td>' +
+        '<td class="compute-td"></td>';
+      tbody.appendChild(row);
+      updateStorageSummary();
+    }
+
+    function deleteStorageRow(btn) {
+      var tbody = document.getElementById('storage-tbody');
+      if (tbody.rows.length <= 1) return;
+      var row = btn.closest('tr');
+      if (row) {
+        row.remove();
+        updateStorageSummary();
+      }
+    }
+
+    function updateStorageSummary() {
+      var total = 0;
+      var prodTotal = 0;
+      var nonProdTotal = 0;
+      var fepTotal = 0;
+
+      document.querySelectorAll('#storage-tbody tr').forEach(function(row) {
+        var arch = row.querySelector('select:nth-of-type(1)').value;
+        var type = row.querySelector('select:nth-of-type(2)').value;
+        var tbInput = row.querySelector('input[type="number"]');
+        var tb = parseFloat(tbInput.value);
+        if (isNaN(tb) || tb < 0) tb = 0;
+        total += tb;
+        if (type === 'prod') {
+          prodTotal += tb;
+          if (arch !== 'object_storage') {
+            fepTotal += tb;
+          }
+        } else {
+          nonProdTotal += tb;
+        }
+      });
+
+      document.getElementById('storage-total-tb').textContent = total.toFixed(0);
+      document.getElementById('storage-prod-tb').textContent = prodTotal.toFixed(0);
+      document.getElementById('storage-nonprod-tb').textContent = nonProdTotal.toFixed(0);
+      document.getElementById('backup-fed-tb').value = fepTotal.toFixed(0);
+      document.getElementById('backup-storage-tb').value = (fepTotal * 3).toFixed(0);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      updateMidrangeAddButton();
+      updateMidrangeVcpuButton();
+      updateStorageSummary();
+      updateComputeServerSummary();
+      updateMidrangeServerSummary();
+    });
+
+    /* ── Tower card toggle ── */
+    function toggleTowerCard(towerId) {
+      var checkbox = document.getElementById(towerId);
+      var card     = document.getElementById('card-' + towerId);
+      if (card) {
+        card.style.display = checkbox.checked ? 'block' : 'none';
+      }
+    }
+
+    /* ── Compute server count validation ── */
+    function getComputeOSTotal() {
+      var total = 0;
+      document.querySelectorAll('#compute-os-tbody .compute-number').forEach(function(inp) {
+        var v = parseFloat(inp.value);
+        if (!isNaN(v) && v > 0) total += v;
+      });
+      return total;
+    }
+
+    function getComputeVCPUTotal() {
+      var total = 0;
+      document.querySelectorAll('#compute-vcpu-tbody .compute-number').forEach(function(inp, idx) {
+        /* every 3rd input (index 2, 5, 8…) is "Number of Servers" */
+        if ((idx + 1) % 3 === 0) {
+          var v = parseFloat(inp.value);
+          if (!isNaN(v) && v > 0) total += v;
+        }
+      });
+      return total;
+    }
+
+    function validateComputeCounts() {
+      var osTotal   = getComputeOSTotal();
+      var vcpuTotal = getComputeVCPUTotal();
+      var warning   = document.getElementById('compute-count-warning');
+      var warnOS    = document.getElementById('warn-os-count');
+      var warnVCPU  = document.getElementById('warn-vcpu-count');
+
+      if (osTotal !== vcpuTotal) {
+        warnOS.textContent   = osTotal;
+        warnVCPU.textContent = vcpuTotal;
+        warning.style.display = 'flex';
+      } else {
+        warning.style.display = 'none';
+      }
+    }
+
+    /* ── VMware sizing toggle ── */
+    function toggleVmwareSizing() {
+      var cb    = document.getElementById('compute-vmware');
+      var panel = document.getElementById('vmware-sizing-panel');
+      if (panel) {
+        panel.style.display = cb.checked ? 'block' : 'none';
+      }
+    }
+
+    /* ── VMware live sizing calculation ── */
+    function extractVmwareRates() {
+  function readInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return 0;
+    const val = parseFloat(el.value);
+    return isNaN(val) ? 0 : val;
+  }
+  return {
+    vcfPerCore: readInput('rate-vcf'),
+    lrPerVm:    readInput('rate-lr'),
+    dfwPerCore: readInput('rate-dfw'),
+    aviPerSe:   readInput('rate-avi')
+  };
+}
+
+function updateVmwareSizing() {
+      calcInfraCost();
+      /* Constants (match VMware Rate Card tab) */
+      var VCPU_TO_CORE_RATIO = 2.5;
+      var CORES_PER_HOST     = 32;
+      var RATE_VCF           = 262.50;
+      var RATE_DFW           = 96.00;
+      var RATE_LR            = 240.00;
+      var RATE_AVI           = 2450.00;
+      var AVI_GBPS_PER_SE    = 1.5;
+
+      /* Step 1: total vCores = sum of (avg vCPU × server count) per row */
+      var totalVCores = 0;
+      var rows = document.querySelectorAll('#compute-vcpu-tbody .compute-row');
+      rows.forEach(function(row) {
+        var inputs = row.querySelectorAll('.compute-number');
+        if (inputs.length >= 3) {
+          var avgVcpu  = parseFloat(inputs[0].value) || 0;
+          var serverCt = parseFloat(inputs[2].value) || 0;
+          totalVCores += avgVcpu * serverCt;
+        }
+      });
+
+      /* Step 2: physical cores = totalVCores / 2.5  (round up) */
+      var physCores = Math.ceil(totalVCores / VCPU_TO_CORE_RATIO);
+
+      /* Step 3: hosts = ceil(physCores / 32) */
+      var hostsRequired = (physCores > 0) ? Math.ceil(physCores / CORES_PER_HOST) : 0;
+
+      /* Step 4: cores to license = hosts × 32 */
+      var coresToLicense = hostsRequired * CORES_PER_HOST;
+
+      /* Step 5: annual costs */
+      var costVCF = coresToLicense * RATE_VCF;
+      var costDFW = coresToLicense * RATE_DFW;
+
+      var prodVMs  = parseFloat(document.getElementById('vmw-prod-vms').value)  || 0;
+      var peakGbps = parseFloat(document.getElementById('vmw-peak-gbps').value) || 0;
+      var seRequired = (peakGbps > 0) ? Math.ceil(peakGbps / AVI_GBPS_PER_SE) : 0;
+
+      var costLR  = prodVMs   * RATE_LR;
+      var costAvi = seRequired * RATE_AVI;
+
+      var costTotal = costVCF + costDFW + costLR + costAvi;
+
+      /* Update display */
+      document.getElementById('vmw-total-vcores').textContent    = totalVCores.toLocaleString();
+      document.getElementById('vmw-phys-cores').textContent      = physCores.toLocaleString();
+      document.getElementById('vmw-hosts').textContent           = hostsRequired.toLocaleString();
+      document.getElementById('vmw-cores-to-license').textContent = coresToLicense.toLocaleString();
+
+      document.getElementById('vmw-cost-vcf').textContent  = costVCF.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('vmw-cost-dfw').textContent  = costDFW.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('vmw-cost-lr').textContent   = costLR.toLocaleString(undefined,  {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('vmw-cost-avi').textContent  = costAvi.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('vmw-cost-total').textContent = costTotal.toLocaleString(undefined, {minimumFractionDigits:0, maximumFractionDigits:0});
+    }
+
+    /* Attach live validation to existing inputs on page load */
+    function attachComputeValidation() {
+      document.querySelectorAll('#compute-os-tbody .compute-number, #compute-vcpu-tbody .compute-number').forEach(function(inp) {
+        inp.addEventListener('input', validateComputeCounts);
+      });
+      /* also hook vCPU table inputs to VMware sizing */
+      document.querySelectorAll('#compute-vcpu-tbody .compute-number').forEach(function(inp) {
+        inp.addEventListener('input', updateVmwareSizing);
+      });
+    }
+    attachComputeValidation();
+
+    /* ── Show Rates & KPIs toggle ── */
+    document.getElementById('showRatesKPIs').addEventListener('change', function() {
+      var infraTab   = document.querySelector('[data-tab="infra-rates"]');
+      var fteTab     = document.querySelector('[data-tab="fte-kpis"]');
+      var msTab      = document.querySelector('[data-tab="managed-services"]');
+      var vmwareTab  = document.querySelector('[data-tab="vmware-rate"]');
+
+      var display = this.checked ? 'inline-flex' : 'none';
+
+      infraTab.style.display  = display;
+      fteTab.style.display    = display;
+      msTab.style.display     = display;
+      vmwareTab.style.display = display;
+    });
+  /* ============================================================
+   VMWARE LIVE SIZING
+   ============================================================ */
+
+function toggleVmwareSizing() {
+  var cb = document.getElementById('compute-vmware');
+  var panel = document.getElementById('vmware-sizing-panel');
+  if (!panel) return;
+  if (cb && cb.checked) {
+    panel.style.display = 'block';
+    initVmwareSizingCollapse();
+    initMSSizing();
+    initInfraSizing();
+    wireMSSizingListeners();
+    updateManagedServicesSizing();
+    updateVmwareSizing();
+    calcInfraCost();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function toggleVmwareSizingCollapse() {
+  var body         = document.getElementById('vmware-sizing-body');
+  var arrow        = document.getElementById('vmware-sizing-arrow');
+  var label        = document.getElementById('vmware-sizing-label');
+  var collapsedTot = document.getElementById('vmware-collapsed-total');
+  if (!body) return;
+
+  var isCollapsed = body.style.display === 'none';
+  if (isCollapsed) {
+    body.style.display             = 'block';
+    arrow.style.transform          = 'rotate(0deg)';
+    label.textContent              = 'Collapse';
+    if (collapsedTot) collapsedTot.style.display = 'none';
+  } else {
+    body.style.display             = 'none';
+    arrow.style.transform          = 'rotate(-90deg)';
+    label.textContent              = 'Expand';
+    if (collapsedTot) {
+      var bannerVal    = document.getElementById('vmware-total-annual');
+      var collapsedVal = document.getElementById('vmware-collapsed-total-value');
+      if (bannerVal && collapsedVal) collapsedVal.textContent = bannerVal.textContent;
+      collapsedTot.style.display = 'inline-flex';
+    }
+  }
+}
+
+function initVmwareSizingCollapse() {
+  var body  = document.getElementById('vmware-sizing-body');
+  var arrow = document.getElementById('vmware-sizing-arrow');
+  var label = document.getElementById('vmware-sizing-label');
+  if (!body) return;
+  body.style.display    = 'block';
+  arrow.style.transform = 'rotate(0deg)';
+  label.textContent     = 'Collapse';
+  var collapsedTot = document.getElementById('vmware-collapsed-total');
+  if (collapsedTot) collapsedTot.style.display = 'none';
+}
+
+function attachRateCardListeners() {
+  if (window._rateCardListenersAttached) return;
+  var inputs = document.querySelectorAll('#panel-vmware-rate input[type="number"], #panel-vmware-rate select');
+  inputs.forEach(function(el) {
+    el.addEventListener('input', function() {
+      updateVmwareSizing();
+    });
+    el.addEventListener('change', function() {
+      updateVmwareSizing();
+    });
+  });
+  window._rateCardListenersAttached = true;
+}
+
+function extractSizingConstants() {
+  var constants = {
+    vcpuRatio:     2.5,
+    coresPerHost:  32,
+    ramOvercommit: 0.7,
+    gbpsPerSe:     1.5
+  };
+
+  var panel = document.getElementById('panel-vmware-rate');
+  if (!panel) return constants;
+
+  var tables = panel.querySelectorAll('table');
+  tables.forEach(function(tbl) {
+    var allText = tbl.innerText.toLowerCase();
+    if (allText.indexOf('vcpu') === -1 && allText.indexOf('cores per host') === -1) return;
+
+    var rows = tbl.querySelectorAll('tbody tr');
+    rows.forEach(function(row) {
+      var cells = row.querySelectorAll('td');
+      if (cells.length < 2) return;
+      var label   = cells[0].innerText.toLowerCase().trim();
+      var valText = cells[cells.length - 1].innerText.trim();
+
+      if (label.indexOf('vcpu') !== -1 && (label.indexOf('ratio') !== -1 || label.indexOf('core') !== -1)) {
+        var m = valText.replace(/,/g, '').match(/([\d.]+)\s*[:to]/i);
+        if (m) constants.vcpuRatio = parseFloat(m[1]);
+        else { var m2 = valText.match(/([\d.]+)/); if (m2) constants.vcpuRatio = parseFloat(m2[1]); }
+      }
+
+      if (label.indexOf('cores per host') !== -1 || (label.indexOf('core') !== -1 && label.indexOf('host') !== -1)) {
+        var m = valText.match(/(\d+)/);
+        if (m) constants.coresPerHost = parseInt(m[1]);
+      }
+
+      if (label.indexOf('ram') !== -1 && (label.indexOf('overcommit') !== -1 || label.indexOf('ratio') !== -1)) {
+        var m = valText.replace(/,/g, '').match(/([\d.]+)\s*[:to]/i);
+        if (m) constants.ramOvercommit = parseFloat(m[1]);
+        else { var m2 = valText.match(/([\d.]+)/); if (m2) constants.ramOvercommit = parseFloat(m2[1]); }
+      }
+
+      if (label.indexOf('gbps') !== -1 || (label.indexOf('throughput') !== -1 && label.indexOf('se') !== -1)) {
+        var m = valText.match(/([\d.]+)/);
+        if (m) constants.gbpsPerSe = parseFloat(m[1]);
+      }
+    });
+  });
+
+  return constants;
+}
+
+function getComputeTotals() {
+  var totalVcpus  = 0;
+  var totalVramGb = 0;
+
+  var card = document.getElementById('card-tower-compute');
+  if (!card) return { totalVcpus: 0, totalVramGb: 0 };
+
+  var allRows = card.querySelectorAll('tbody tr');
+  allRows.forEach(function(row) {
+    var inputs = row.querySelectorAll('input[type="number"]');
+    if (inputs.length >= 3) {
+      var vcpu  = parseFloat(inputs[0].value) || 0;
+      var vram  = parseFloat(inputs[1].value) || 0;
+      var count = parseFloat(inputs[2].value) || 0;
+      totalVcpus  += vcpu  * count;
+      totalVramGb += vram  * count;
+    }
+  });
+
+  return { totalVcpus: totalVcpus, totalVramGb: totalVramGb };
+}
+
+function fmtCurrency(val) {
+  if (val === null || val === undefined || isNaN(val)) return '–';
+  return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function getProdServerTotal() {
+  var total = 0;
+  var rows = document.querySelectorAll('#compute-os-tbody tr');
+  rows.forEach(function(row) {
+    var selects = row.querySelectorAll('select.compute-select');
+    var inp = row.querySelector('input[type="number"]');
+    // selects[0] = OS, selects[1] = Server Type
+    if (selects.length >= 2 && inp && selects[1].value === 'prod') {
+      var val = parseFloat(inp.value) || 0;
+      total += val;
+    }
+  });
+  return total;
+}
+
+function lrSyncFromCount() {
+  var countInput = document.getElementById('lr-vm-count');
+  var pctInput   = document.getElementById('lr-vm-pct');
+  var prodTotal  = getProdServerTotal();
+  var count      = parseFloat(countInput.value) || 0;
+  if (prodTotal > 0) {
+    pctInput.value = Math.round((count / prodTotal) * 100);
+  } else {
+    pctInput.value = '';
+  }
+  updateVmwareSizing();
+}
+
+function lrSyncFromPct() {
+  var countInput = document.getElementById('lr-vm-count');
+  var pctInput   = document.getElementById('lr-vm-pct');
+  var prodTotal  = getProdServerTotal();
+  var pct        = parseFloat(pctInput.value) || 0;
+  var count      = Math.round((pct / 100) * prodTotal);
+  countInput.value = count > 0 ? count : '';
+  updateVmwareSizing();
+}
+
+function updateVmwareSizing() {
+  calcInfraCost();
+  var panel = document.getElementById('vmware-sizing-panel');
+  if (!panel || panel.style.display === 'none') return;
+
+  var rates     = extractVmwareRates();
+  var constants = extractSizingConstants();
+  var totals    = getComputeTotals();
+
+  // Refresh prod total display
+  var prodTotal = getProdServerTotal();
+  var prodTotalEl = document.getElementById('lr-prod-total');
+  if (prodTotalEl) prodTotalEl.textContent = prodTotal;
+
+  var totalVcpus  = totals.totalVcpus;
+  var totalVramGb = totals.totalVramGb;
+
+  /* ---- VCF ---- */
+  var vcfCores       = (constants.vcpuRatio > 0) ? Math.ceil(totalVcpus / constants.vcpuRatio) : 0;
+  var vcfHosts       = (constants.coresPerHost > 0) ? Math.ceil(vcfCores / constants.coresPerHost) : 0;
+  var vcfActualCores = vcfHosts * constants.coresPerHost;
+  var vcfAnnual      = (vcfActualCores > 0 && rates.vcfPerCore !== null) ? vcfActualCores * rates.vcfPerCore : null;
+
+  var el;
+  el = document.getElementById('vcf-hosts');       if (el) el.innerText = vcfHosts       || '–';
+  el = document.getElementById('vcf-cores');       if (el) el.innerText = vcfActualCores  || '–';
+  el = document.getElementById('vcf-vcpus');       if (el) el.innerText = totalVcpus      || '–';
+  el = document.getElementById('vcf-annual');      if (el) el.innerText = fmtCurrency(vcfAnnual);
+  el = document.getElementById('vcf-rate-display'); if (el) el.innerText = (rates.vcfPerCore !== null) ? fmtCurrency(rates.vcfPerCore) : '–';
+  el = document.getElementById('vcf-ratio-display'); if (el) el.innerText = constants.vcpuRatio;
+
+  /* ---- DFW ---- */
+  var dfwCores  = vcfActualCores;
+  var dfwAnnual = (dfwCores > 0 && rates.dfwPerCore !== null) ? dfwCores * rates.dfwPerCore : null;
+
+  el = document.getElementById('dfw-cores');        if (el) el.innerText = dfwCores || '–';
+  el = document.getElementById('dfw-cost');         if (el) el.innerText = fmtCurrency(dfwAnnual);
+  el = document.getElementById('dfw-annual');       if (el) el.innerText = fmtCurrency(dfwAnnual);
+  el = document.getElementById('dfw-rate-display'); if (el) el.innerText = (rates.dfwPerCore !== null) ? fmtCurrency(rates.dfwPerCore) : '–';
+
+  /* ---- Live Recovery ---- */
+  var lrVmInput = document.getElementById('lr-vm-count');
+  var lrVms     = lrVmInput ? (parseFloat(lrVmInput.value) || 0) : 0;
+  var lrAnnual  = (lrVms > 0 && rates.lrPerVm !== null) ? lrVms * rates.lrPerVm : null;
+
+  el = document.getElementById('lr-vms');           if (el) el.innerText = lrVms || '–';
+  el = document.getElementById('lr-annual');        if (el) el.innerText = fmtCurrency(lrAnnual);
+  el = document.getElementById('lr-rate-display');  if (el) el.innerText = (rates.lrPerVm !== null) ? fmtCurrency(rates.lrPerVm) : '–';
+
+  /* ---- Avi / NSX LB ---- */
+  var aviGbpsInput = document.getElementById('avi-gbps');
+  var aviGbps      = aviGbpsInput ? (parseFloat(aviGbpsInput.value) || 0) : 0;
+  var aviSes       = (aviGbps > 0 && constants.gbpsPerSe > 0) ? Math.ceil(aviGbps / constants.gbpsPerSe) : 0;
+  var aviAnnual    = (aviSes > 0 && rates.aviPerSe !== null) ? aviSes * rates.aviPerSe : null;
+
+  el = document.getElementById('avi-ses');          if (el) el.innerText = aviSes || '–';
+  el = document.getElementById('avi-annual');       if (el) el.innerText = fmtCurrency(aviAnnual);
+  el = document.getElementById('avi-rate-display'); if (el) el.innerText = (rates.aviPerSe !== null) ? fmtCurrency(rates.aviPerSe) : '–';
+  el = document.getElementById('avi-gbps-display'); if (el) el.innerText = constants.gbpsPerSe;
+
+  /* ---- Grand Total ---- */
+  var grandTotal = 0;
+  var anyMissing = false;
+  [vcfAnnual, dfwAnnual, lrAnnual, aviAnnual].forEach(function(v) {
+    if (v !== null && !isNaN(v)) grandTotal += v;
+    else anyMissing = true;
+  });
+
+  el = document.getElementById('vmware-total-annual');
+  if (el) el.innerText = (grandTotal > 0) ? fmtCurrency(grandTotal) + (anyMissing ? ' *' : '') : '–';
+}
+
+window.addEventListener('load', function() {
+  attachRateCardListeners();
+  wireMSSizingListeners();
+  var msSizingBody = document.getElementById('ms-sizing-body');
+  if (msSizingBody) msSizingBody.style.display = 'block';
+  updateManagedServicesSizing();
+});
+/* ============================================================
+   END VMWARE LIVE SIZING
+   ============================================================ */
+
+/* ══════════════════════════════════════════
+   MANAGED SERVICES LIVE SIZING FUNCTIONS
+   ══════════════════════════════════════════ */
+
+function extractFTEKPIs() {
+  var maturity = (document.getElementById('maturityLevel') ? document.getElementById('maturityLevel').value : 'median') || 'median';
+  var kpis = { windows: 182, linux: 496, unix: 76 };
+  var colMap = { lower: 1, median: 2, upper: 3 };
+  var colIdx = colMap[maturity] !== undefined ? colMap[maturity] : 2;
+
+  var rows = document.querySelectorAll('#fte-kpi-tbody tr, #fte-kpis-tbody tr');
+  rows.forEach(function(row) {
+    var cells = row.querySelectorAll('td');
+    if (cells.length < 4) return;
+    var desc = cells[0].textContent.toLowerCase();
+    var cellEl = cells[colIdx];
+    if (!cellEl) return;
+    var inp = cellEl.querySelector('input');
+    var raw = parseFloat(inp ? inp.value : cellEl.textContent);
+    if (isNaN(raw)) return;
+    if (desc.indexOf('windows') !== -1)                          kpis.windows = raw;
+    else if (desc.indexOf('linux') !== -1)                       kpis.linux   = raw;
+    else if (desc.indexOf('unix') !== -1 || desc.indexOf('aix') !== -1) kpis.unix = raw;
+  });
+  return kpis;
+}
+
+function getOSServerCounts() {
+  var counts = { windows: 0, linux: 0, unix: 0 };
+  var tbody = document.getElementById('compute-os-tbody');
+  if (!tbody) return counts;
+  tbody.querySelectorAll('tr.compute-row').forEach(function(row) {
+    var selects = row.querySelectorAll('select.compute-select');
+    var input   = row.querySelector('input.compute-number');
+    if (!selects.length || !input) return;
+    var os  = selects[0].value.toLowerCase();
+    var qty = parseFloat(input.value) || 0;
+    if (os.indexOf('windows') !== -1)     counts.windows += qty;
+    else if (os.indexOf('linux') !== -1)  counts.linux   += qty;
+    else if (os.indexOf('unix') !== -1)   counts.unix    += qty;
+  });
+  return counts;
+}
+
+function extractMSRates() {
+  /* ── Discounted Monthly Rates (63% of Typical) from pricing table ── */
+  var rates = {
+    us: {
+      windows:  10405,
+      linux:    10868,
+      unix:     11957
+    },
+    india: {
+      windows:  3249,
+      linux:    3461,
+      unix:     3734
+    }
+  };
+  var rows = document.querySelectorAll('#ms-rates-tbody tr, #managed-services-rates-tbody tr');
+  if (rows.length === 0) return rates;
+
+  rows.forEach(function(row) {
+    var cells = row.querySelectorAll('td');
+    if (cells.length < 13) return;
+    var tower    = cells[0].textContent.trim().toLowerCase();
+    var desc     = cells[1].textContent.trim().toLowerCase();
+    var location = cells[9].textContent.trim().toLowerCase();
+
+    /* Only process Windows / Linux / Unix rows */
+    var isWindows = tower.indexOf('window')  !== -1 || desc.indexOf('windows') !== -1;
+    var isLinux   = tower.indexOf('linux')   !== -1 || desc.indexOf('linux')   !== -1;
+    var isUnix    = tower.indexOf('unix')    !== -1 || desc.indexOf('unix')    !== -1 || desc.indexOf('aix') !== -1;
+    if (!isWindows && !isLinux && !isUnix) return;
+
+    var isUS    = location.indexOf('united states') !== -1 || location.indexOf('onshore') !== -1;
+    var isIndia = location.indexOf('india')         !== -1 || location.indexOf('offshore') !== -1;
+    if (!isUS && !isIndia) return;
+
+    /* Read Discounted/Mo — always the last cell */
+    var rateCell  = cells[cells.length - 1];
+    var rateInput = rateCell ? rateCell.querySelector('input') : null;
+    var rawStr    = rateInput ? rateInput.value : (rateCell ? rateCell.textContent : '0');
+    rawStr = rawStr.replace(/\$/g, '').replace(/,/g, '').replace(/K/gi, '000').trim();
+    var raw = parseFloat(rawStr);
+    if (isNaN(raw) || raw <= 0) return;
+
+    var osKey = isWindows ? 'windows' : isLinux ? 'linux' : 'unix';
+    if (isUS)    rates.us[osKey]    = raw;
+    if (isIndia) rates.india[osKey] = raw;
+  });
+  return rates;
+}
+
+function updateManagedServicesSizing() {
+  var usDeliveryPct    = (parseFloat(document.getElementById('usDelivery')    ? document.getElementById('usDelivery').value    : 70) || 70)  / 100;
+  var indiaDeliveryPct = (parseFloat(document.getElementById('indiaDelivery') ? document.getElementById('indiaDelivery').value : 30) || 30)  / 100;
+
+  var kpis   = extractFTEKPIs();
+  var counts = getOSServerCounts();
+  var rates  = extractMSRates();
+
+  var allOS = [
+    { key: 'windows', label: 'Windows'  },
+    { key: 'linux',   label: 'Linux'    },
+    { key: 'unix',    label: 'Unix/AIX' }
+  ];
+
+  /* ── Only include OS types where server count > 0 ── */
+  var activeOS = allOS.filter(function(os) {
+    return (counts[os.key] || 0) > 0;
+  });
+
+  var grandTotal = 0;
+
+  function buildRows(locationKey, pct, tbodyId) {
+    var el = document.getElementById(tbodyId);
+    if (!el) return 0;
+    el.innerHTML = '';
+
+    /* No servers entered yet — show placeholder */
+    if (activeOS.length === 0) {
+      var ph = document.createElement('tr');
+      ph.innerHTML = '<td colspan="6" class="ms-loading">Enter server counts above to calculate…</td>';
+      el.appendChild(ph);
+      return 0;
+    }
+
+    var locationTotal = 0;
+
+    activeOS.forEach(function(os) {
+      var servers  = counts[os.key] || 0;
+      var kpi      = kpis[os.key]   || 1;
+      var rate     = (rates[locationKey] && rates[locationKey][os.key]) ? rates[locationKey][os.key] : 0;
+      var totalFTE = Math.round(servers / kpi);
+      var splitFTE = Math.round(totalFTE * pct * 10) / 10;
+      var annual   = splitFTE * rate * 12;
+      locationTotal += annual;
+
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="compute-td">' + os.label + '</td>' +
+        '<td class="compute-td ms-number">' + servers.toLocaleString() + '</td>' +
+        '<td class="compute-td ms-number">' + kpi.toLocaleString() + '</td>' +
+        '<td class="compute-td ms-number">' + splitFTE.toFixed(1) + '</td>' +
+        '<td class="compute-td ms-number">$' + rate.toLocaleString() + '</td>' +
+        '<td class="compute-td ms-cost">$' + Math.round(annual).toLocaleString() + '</td>';
+      el.appendChild(tr);
+    });
+
+    /* Subtotal row */
+    var subTr = document.createElement('tr');
+    subTr.className = 'ms-subtotal-row';
+    subTr.innerHTML =
+      '<td colspan="5">Subtotal</td>' +
+      '<td class="ms-cost">$' + Math.round(locationTotal).toLocaleString() + '</td>';
+    el.appendChild(subTr);
+
+    return locationTotal;
+  }
+
+  grandTotal += buildRows('us',    usDeliveryPct,    'ms-us-tbody');
+  grandTotal += buildRows('india', indiaDeliveryPct, 'ms-india-tbody');
+
+  var totalEl = document.getElementById('ms-total-value');
+  if (totalEl) totalEl.textContent = '$' + Math.round(grandTotal).toLocaleString();
+}
+
+function wireMSSizingListeners() {
+  ['maturityLevel', 'usDelivery', 'indiaDelivery'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateManagedServicesSizing);
+  });
+  var osTbody = document.getElementById('compute-os-tbody');
+  if (osTbody) {
+    osTbody.addEventListener('input',  updateManagedServicesSizing);
+    osTbody.addEventListener('change', updateManagedServicesSizing);
+  }
+  var msRatesTbody = document.querySelector('#ms-us-tbody, #ms-india-tbody');
+  if (msRatesTbody) {
+    msRatesTbody.addEventListener('input',  updateManagedServicesSizing);
+    msRatesTbody.addEventListener('change', updateManagedServicesSizing);
+  }
+  ['fte-kpi-tbody', 'fte-kpis-tbody'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateManagedServicesSizing);
+  });
+}
+
+function toggleMSSizing() {
+  var body         = document.getElementById('ms-sizing-body');
+  var arrow        = document.getElementById('ms-sizing-arrow');
+  var label        = document.getElementById('ms-sizing-label');
+  var collapsedTot = document.getElementById('ms-collapsed-total');
+  if (!body) return;
+
+  var isCollapsed = body.style.display === 'none';
+  if (isCollapsed) {
+    body.style.display             = 'block';
+    arrow.style.transform          = 'rotate(0deg)';
+    label.textContent              = 'Collapse';
+    if (collapsedTot) collapsedTot.style.display = 'none';
+  } else {
+    body.style.display             = 'none';
+    arrow.style.transform          = 'rotate(-90deg)';
+    label.textContent              = 'Expand';
+    if (collapsedTot) {
+      // sync the value from the banner before showing
+      var bannerVal = document.getElementById('ms-total-value');
+      var collapsedVal = document.getElementById('ms-collapsed-total-value');
+      if (bannerVal && collapsedVal) collapsedVal.textContent = bannerVal.textContent;
+      collapsedTot.style.display = 'inline';
+    }
+  }
+}
+
+function initMSSizing() {
+  var body         = document.getElementById('ms-sizing-body');
+  var arrow        = document.getElementById('ms-sizing-arrow');
+  var label        = document.getElementById('ms-sizing-label');
+  var collapsedTot = document.getElementById('ms-collapsed-total');
+  if (!body) return;
+  body.style.display    = 'block';
+  arrow.style.transform = 'rotate(0deg)';
+  label.textContent     = 'Collapse';
+  if (collapsedTot) collapsedTot.style.display = 'none'; // hidden on load (expanded)
+}
+
+// ══════════════════════════════════════════════════════
+// INFRASTRUCTURE COST LIVE SIZING
+// ══════════════════════════════════════════════════════
+
+function toggleInfraSizing() {
+  var body         = document.getElementById('infra-sizing-body');
+  var arrow        = document.getElementById('infra-sizing-arrow');
+  var label        = document.getElementById('infra-sizing-label');
+  var collapsedTot = document.getElementById('infra-collapsed-total');
+  if (!body) return;
+
+  var isCollapsed = body.style.display === 'none';
+  if (isCollapsed) {
+    body.style.display             = 'block';
+    arrow.style.transform          = 'rotate(0deg)';
+    label.textContent              = 'Collapse';
+    if (collapsedTot) collapsedTot.style.display = 'none';
+  } else {
+    body.style.display             = 'none';
+    arrow.style.transform          = 'rotate(-90deg)';
+    label.textContent              = 'Expand';
+    if (collapsedTot) {
+      // sync value from banner before showing
+      var bannerVal    = document.getElementById('infra-total-value');
+      var collapsedVal = document.getElementById('infra-collapsed-total-value');
+      if (bannerVal && collapsedVal) collapsedVal.textContent = bannerVal.textContent;
+      collapsedTot.style.display = 'inline';
+    }
+  }
+}
+
+function initInfraSizing() {
+  var body         = document.getElementById('infra-sizing-body');
+  var arrow        = document.getElementById('infra-sizing-arrow');
+  var label        = document.getElementById('infra-sizing-label');
+  var collapsedTot = document.getElementById('infra-collapsed-total');
+  if (!body) return;
+  body.style.display    = 'block';
+  arrow.style.transform = 'rotate(0deg)';
+  label.textContent     = 'Collapse';
+  if (collapsedTot) collapsedTot.style.display = 'none'; // hidden on load (expanded)
+}
+
+function extractInfraRates() {
+  var defaults = { vcpu: 8.00, vram: 1.50 };
+  try {
+    var panel = document.getElementById('panel-infra-rates');
+    if (!panel) return defaults;
+
+    var rows = panel.querySelectorAll('table tbody tr');
+    var vcpu = null, vram = null;
+
+    rows.forEach(function(row) {
+      var cells     = row.querySelectorAll('td');
+      if (cells.length < 3) return;
+      var component = (cells[1] ? cells[1].textContent : '').trim().toLowerCase();
+      var rateText  = (cells[2] ? cells[2].textContent : '').replace(/[^0-9.]/g, '');
+      var rate      = parseFloat(rateText);
+      if (isNaN(rate)) return;
+      if (component.indexOf('vcpu')  !== -1) vcpu = rate;
+      if (component.indexOf('vram')  !== -1) vram = rate;
+    });
+
+    return {
+      vcpu: vcpu !== null ? vcpu : defaults.vcpu,
+      vram: vram !== null ? vram : defaults.vram
+    };
+  } catch(e) {
+    return defaults;
+  }
+}
+
+function calcInfraCost() {
+  // Auto-read totals from "Average vCPU / vRAM based Server Counts" table
+  // Each row = 3 inputs: [idx%3===0]=avgVCPU, [idx%3===1]=avgVRAM, [idx%3===2]=servers
+  var totalVcpu = 0;
+  var totalVram = 0;
+  var servers   = 0;
+
+  document.querySelectorAll('#compute-vcpu-tbody .compute-number').forEach(function(inp, idx) {
+    var v   = parseFloat(inp.value);
+    var pos = idx % 3;
+    if (!isNaN(v) && v > 0) {
+      if (pos === 0) totalVcpu += v;   // avg vCPU — will multiply by row servers below
+      if (pos === 1) totalVram += v;   // avg vRAM — will multiply by row servers below
+      if (pos === 2) servers   += v;   // number of servers
+    }
+  });
+
+  // avgVcpu/avgVram are per-server averages summed across rows
+  // Re-derive weighted totals properly per row
+  var totalVcpuUnits = 0;
+  var totalVramUnits = 0;
+  var allInputs = document.querySelectorAll('#compute-vcpu-tbody .compute-number');
+  for (var i = 0; i < allInputs.length; i += 3) {
+    var rowVcpu    = parseFloat(allInputs[i]     ? allInputs[i].value     : 0) || 0;
+    var rowVram    = parseFloat(allInputs[i + 1] ? allInputs[i + 1].value : 0) || 0;
+    var rowServers = parseFloat(allInputs[i + 2] ? allInputs[i + 2].value : 0) || 0;
+    totalVcpuUnits += rowVcpu * rowServers;
+    totalVramUnits += rowVram * rowServers;
+  }
+
+  var rates        = extractInfraRates();
+  var vcpuRate     = rates.vcpu;
+  var vramRate     = rates.vram;
+
+  var totalVcpu    = totalVcpuUnits;
+  var totalVram    = totalVramUnits;
+
+  var vcpuMonthly  = totalVcpu * vcpuRate;
+  var vramMonthly  = totalVram * vramRate;
+  var totalMonthly = vcpuMonthly + vramMonthly;
+  var totalAnnual  = totalMonthly * 12;
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  // Update rate badges in footer
+  var vcpuDisplay = document.getElementById('infra-vcpu-rate-display');
+  var vramDisplay = document.getElementById('infra-vram-rate-display');
+  if (vcpuDisplay) vcpuDisplay.textContent = '$' + vcpuRate.toFixed(2);
+  if (vramDisplay) vramDisplay.textContent = '$' + vramRate.toFixed(2);
+
+  var computeTbody = document.getElementById('infra-compute-tbody');
+  var costTbody    = document.getElementById('infra-cost-tbody');
+  var totalBanner  = document.getElementById('infra-total-value');
+  var collapsedVal = document.getElementById('infra-collapsed-total-value');
+
+  // Zero state — no inputs yet
+  if (servers === 0 && totalVcpuUnits === 0 && totalVramUnits === 0) {
+    if (computeTbody) computeTbody.innerHTML = '<tr><td colspan="4" class="ms-loading">Enter server counts above to calculate\u2026</td></tr>';
+    if (costTbody)    costTbody.innerHTML    = '<tr><td colspan="4" class="ms-loading">Enter server counts above to calculate\u2026</td></tr>';
+    if (totalBanner)  totalBanner.textContent  = '$0';
+    if (collapsedVal) collapsedVal.textContent = '$0';
+    return;
+  }
+
+  // Compute Summary table
+  if (computeTbody) {
+    computeTbody.innerHTML =
+      '<tr>' +
+        '<td>vCPU</td>' +
+        '<td>' + totalVcpu.toLocaleString('en-US') + '</td>' +
+        '<td>' + fmt(vcpuRate) + '</td>' +
+        '<td>' + fmt(vcpuMonthly) + '</td>' +
+      '</tr>' +
+      '<tr>' +
+        '<td>vRAM (GB)</td>' +
+        '<td>' + totalVram.toLocaleString('en-US') + '</td>' +
+        '<td>' + fmt(vramRate) + '</td>' +
+        '<td>' + fmt(vramMonthly) + '</td>' +
+      '</tr>' +
+      '<tr style="font-weight:700; background:#0d1b2e;">' +
+        '<td colspan="3" style="text-align:right; padding-right:10px;">Monthly Total</td>' +
+        '<td>' + fmt(totalMonthly) + '</td>' +
+      '</tr>';
+  }
+
+  // Cost Breakdown table
+  if (costTbody) {
+    costTbody.innerHTML =
+      '<tr>' +
+        '<td>Monthly</td>' +
+        '<td>' + fmt(vcpuMonthly) + '</td>' +
+        '<td>' + fmt(vramMonthly) + '</td>' +
+        '<td>' + fmt(totalMonthly) + '</td>' +
+      '</tr>' +
+      '<tr style="font-weight:700; background:#0d1b2e;">' +
+        '<td>Annual (\xd712)</td>' +
+        '<td>' + fmt(vcpuMonthly * 12) + '</td>' +
+        '<td>' + fmt(vramMonthly * 12) + '</td>' +
+        '<td>' + fmt(totalAnnual) + '</td>' +
+      '</tr>';
+  }
+
+  // Total banner + collapsed total
+  if (totalBanner)  totalBanner.textContent  = fmt(totalAnnual);
+  if (collapsedVal) collapsedVal.textContent = fmt(totalAnnual);
+}
+</script>
+
+</body>
+</html>
