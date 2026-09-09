@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Assumptive Base Case - 5 Year TCO Estimator</title>
   <link rel="stylesheet" href="BaseCase.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script>
     (function() {
       var PAGE_ZOOM = 0.9;
@@ -595,15 +598,15 @@
 
                 <!-- Card 1: US FTEs by OS -->
                 <div class="ms-card">
-                  <div class="ms-card-header">🇺🇸 US FTEs by OS Role <span id="ms-us-delivery" style="font-size:11px; font-weight:400; color:#999;"></span></div>
+                  <div class="exec-card-title">&#127919; IN-SCOPE OVERVIEW</div>
                   <table class="ms-card-table">
-                    <thead>
+                    <div class="exec-kpi-box" style="flex:1;"><div class="exec-metric-label">In-Scope Coverage</div><div class="exec-stat-big" id="exec-scope-coverage-value" style="font-size:22px; color:#4CAF50;">0%</div></div>
                       <tr>
                         <th>OS</th>
                         <th>Servers</th>
                         <th>KPI (srv/FTE)</th>
                         <th>FTEs</th>
-                        <th>Rate/Month</th>
+                  <div class="exec-card-title">&#127919; IN-SCOPE IT SPEND</div>
                         <th>Monthly Cost</th>
                         <th>Annual Cost</th>
                       </tr>
@@ -621,14 +624,14 @@
                     <thead>
                       <tr>
                         <th>OS</th>
-                        <th>Servers</th>
+                      <div class="exec-gauge-sub">IN-SCOPE - MANAGED SERVICES PARTNERSHIP</div>
                         <th>KPI (srv/FTE)</th>
                         <th>FTEs</th>
                         <th>Rate/Month</th>
                         <th>Monthly Cost</th>
                         <th>Annual Cost</th>
                       </tr>
-                    </thead>
+                    <div class="exec-card-title">&#128200; IN-SCOPE TREND (5-YR)</div>
                     <tbody id="ms-india-tbody">
                       <tr><td colspan="7" class="ms-loading">Enter server counts above to calculate…</td></tr>
                     </tbody>
@@ -4313,10 +4316,12 @@
               <div style="font-size:12px; color:#555; margin-top:2px;">Estimated Infrastructure and Managed Services Cost Projection</div>
               <div id="tco-assumptions-note" style="font-size:11px; color:#888; margin-top:2px;"></div>
             </div>
-            <div style="display:flex; gap:8px; align-items:center;">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
               <button onclick="tcoExpandAll()" style="padding:6px 12px; background:#e0e0e0; color:#1a2535; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Expand All</button>
               <button onclick="tcoCollapseAll()" style="padding:6px 12px; background:#e0e0e0; color:#1a2535; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Collapse All</button>
               <button onclick="buildTCOAnalysis(); buildTCOOperationalMetrics();" style="padding:6px 12px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">&#128260; Refresh Data</button>
+              <button id="tco-export-pdf-button" onclick="exportTCOAnalysisPdf()" style="padding:6px 12px; background:#003366; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Export PDF</button>
+              <button id="tco-export-excel-button" onclick="exportTCOAnalysisExcel()" style="padding:6px 12px; background:#217346; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Export Excel</button>
             </div>
           </div>
 
@@ -4342,8 +4347,8 @@
             </div>
           </div>
 
-          <div style="overflow-x:auto; width:100%;">
-            <table class="dc-live-table" style="table-layout:fixed;">
+          <div style="width:100%;">
+            <table class="dc-live-table" style="table-layout:fixed; width:100%;">
               <colgroup>
                 <col style="width:26%;" />
                 <col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" />
@@ -4380,8 +4385,8 @@
               </div>
             </div>
 
-            <div style="overflow-x:auto; width:100%;">
-              <table class="dc-live-table" style="table-layout:fixed;">
+            <div style="width:100%;">
+              <table class="dc-live-table" style="table-layout:fixed; width:100%;">
                 <colgroup>
                   <col style="width:26%;" />
                   <col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" />
@@ -4416,8 +4421,8 @@
               </div>
             </div>
 
-            <div style="overflow-x:auto; width:100%;">
-              <table class="dc-live-table" style="table-layout:fixed;">
+            <div style="width:100%;">
+              <table class="dc-live-table" style="table-layout:fixed; width:100%;">
                 <colgroup>
                   <col style="width:26%;" />
                   <col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" /><col style="width:12%;" />
@@ -4447,6 +4452,9 @@
       <div id="panel-exec-brief" class="tab-panel" role="tabpanel">
         <div class="exec-brief-wrap">
           <div class="exec-brief-title">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+              <button id="exec-export-pdf-button" onclick="exportExecutiveBriefPdf()" style="padding:6px 12px; background:#003366; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Export PDF</button>
+            </div>
             <div style="font-size:14pt; font-weight:700; color:#00838f; letter-spacing:0.05em; font-family:Arial, Helvetica, sans-serif;">EXECUTIVE BUSINESS METRICS &amp; INTELLIGENCE</div>
             <div id="exec-brief-subtitle" style="font-size:11pt; color:#556172; margin-top:4px; font-family:Arial, Helvetica, sans-serif;">COMPANY PROFILE: Select Industry Type in Global Inputs</div>
             <div id="exec-brief-headline" style="font-size:11px; color:#00838f; margin-top:8px; font-style:italic; font-family:Arial, Helvetica, sans-serif;"></div>
@@ -4502,9 +4510,9 @@
                 </div>
 
                 <div class="exec-card">
-                  <div class="exec-card-title">&#127919; ENSONO SCOPE OVERVIEW</div>
+                  <div class="exec-card-title">&#127919; IN-SCOPE OVERVIEW</div>
                   <div class="exec-two-col">
-                    <div class="exec-kpi-box" style="flex:1;"><div class="exec-metric-label">Ensono Coverage</div><div class="exec-stat-big" id="exec-scope-coverage-value" style="font-size:22px; color:#4CAF50;">0%</div></div>
+                    <div class="exec-kpi-box" style="flex:1;"><div class="exec-metric-label">In-Scope Coverage</div><div class="exec-stat-big" id="exec-scope-coverage-value" style="font-size:22px; color:#4CAF50;">0%</div></div>
                     <div class="exec-kpi-box" style="flex:1;"><div class="exec-metric-label">Opportunity Gap</div><div class="exec-stat-big" id="exec-scope-opportunity-value" style="font-size:22px; color:#FF9800;">0%</div></div>
                   </div>
                 </div>
@@ -4681,7 +4689,7 @@
               <div class="exec-brief-grid">
 
                 <div class="exec-card">
-                  <div class="exec-card-title">&#127919; ENSONO SCOPE OF IT SPEND</div>
+                  <div class="exec-card-title">&#127919; IN-SCOPE IT SPEND</div>
                   <div class="exec-gauge-wrap">
                     <div class="exec-gauge">
                       <div class="exec-gauge-bg" id="exec-gauge-bg"></div>
@@ -4689,7 +4697,7 @@
                       <div class="exec-gauge-pivot"></div>
                     </div>
                     <div class="exec-gauge-value" id="exec-gauge-value">0% of IT Spend</div>
-                    <div class="exec-gauge-sub">ENSONO SCOPE - MANAGED SERVICES PARTNERSHIP</div>
+                    <div class="exec-gauge-sub">IN-SCOPE - MANAGED SERVICES PARTNERSHIP</div>
                     <div class="exec-gauge-metrics">
                       <span id="exec-gauge-yr1">Yr1: 0%</span>
                       <span id="exec-gauge-yr5">Yr5: 0%</span>
@@ -4701,7 +4709,7 @@
                 </div>
 
                 <div class="exec-card">
-                  <div class="exec-card-title">&#128200; ENSONO SCOPE TREND (5-YR)</div>
+                  <div class="exec-card-title">&#128200; IN-SCOPE TREND (5-YR)</div>
                   <div class="exec-trend-chart" id="exec-ensono-trend-chart" style="height:120px;"></div>
                 </div>
 
@@ -4711,7 +4719,7 @@
                     <div class="exec-kpi-box"><div class="exec-metric-label">IT % of Revenue</div><div class="exec-metric-value" id="exec-kpi-itpct" style="font-size:13px;">0.0%</div></div>
                     <div class="exec-kpi-box"><div class="exec-metric-label">Infrastructure % of IT</div><div class="exec-metric-value" id="exec-kpi-infrapct" style="font-size:13px;">0%</div></div>
                     <div class="exec-kpi-box"><div class="exec-metric-label">Managed Services % of IT</div><div class="exec-metric-value" id="exec-kpi-mspct" style="font-size:13px;">0%</div></div>
-                    <div class="exec-kpi-box"><div class="exec-metric-label">Ensono Coverage</div><div class="exec-metric-value" id="exec-kpi-ensono" style="font-size:13px;">0%</div></div>
+                    <div class="exec-kpi-box"><div class="exec-metric-label">In-Scope Coverage</div><div class="exec-metric-value" id="exec-kpi-ensono" style="font-size:13px;">0%</div></div>
                   </div>
                 </div>
 

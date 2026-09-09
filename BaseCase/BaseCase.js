@@ -517,6 +517,8 @@ function tcoFmtPercent(n) {
   return Math.round(n || 0) + '%';
 }
 
+
+
 function buildTCOAnalysis() {
   var tbody = document.getElementById('tco-analysis-tbody');
   if (!tbody) return;
@@ -942,7 +944,7 @@ function buildExecutiveBrief() {
     gaugeTrendEl.textContent = (declining ? '\u2193 Declining trend' : '\u2191 Improving trend');
     gaugeTrendEl.style.color = declining ? '#E53935' : '#4CAF50';
   }
-  setText('exec-gauge-summary', Math.round(yr1ScopePct) + '% of the organization\'s estimated annual IT spend is covered by Ensono services. Opportunity: ' + Math.round(100 - yr1ScopePct) + '% of IT spend area for optimization.');
+  setText('exec-gauge-summary', Math.round(yr1ScopePct) + '% of the organization\'s estimated annual IT spend is in scope. Opportunity: ' + Math.round(100 - yr1ScopePct) + '% of IT spend area for optimization.');
 
   renderTrendChart('exec-ensono-trend-chart', data.ensonoScopeSeries, function(v) { return Math.round(v) + '%'; });
 
@@ -983,12 +985,12 @@ function buildExecutiveBrief() {
 
     if (declining && data.estimatedItSpendSeries[4]) {
       var opportunityGap = data.estimatedItSpendSeries[4] - data.fullStackSeries[4];
-      if (opportunityGap > 0) insights.push('Ensono scope of estimated IT spend declines from ' + Math.round(yr1ScopePct) + '% to ' + Math.round(yr5ScopePct) + '% by Yr5 &mdash; a growth opportunity of approximately ' + tcoFmtMillions(opportunityGap) + '.');
+      if (opportunityGap > 0) insights.push('In-scope estimated IT spend declines from ' + Math.round(yr1ScopePct) + '% to ' + Math.round(yr5ScopePct) + '% by Yr5 &mdash; a growth opportunity of approximately ' + tcoFmtMillions(opportunityGap) + '.');
     } else if (!declining && yr1ScopePct > 0) {
-      insights.push('Ensono scope of estimated IT spend is improving, from ' + Math.round(yr1ScopePct) + '% (Yr1) to ' + Math.round(yr5ScopePct) + '% (Yr5).');
+      insights.push('In-scope estimated IT spend is improving, from ' + Math.round(yr1ScopePct) + '% (Yr1) to ' + Math.round(yr5ScopePct) + '% (Yr5).');
     }
-    if (yr1ScopePct > 0 && yr1ScopePct < 50) insights.push('<strong>Expansion opportunity:</strong> Ensono currently covers only ' + Math.round(yr1ScopePct) + '% of estimated IT spend, leaving ' + Math.round(100 - yr1ScopePct) + '% addressable.');
-    else if (yr1ScopePct >= 90) insights.push('Ensono coverage is already high at ' + Math.round(yr1ScopePct) + '% of estimated IT spend &mdash; limited remaining expansion headroom.');
+    if (yr1ScopePct > 0 && yr1ScopePct < 50) insights.push('<strong>Expansion opportunity:</strong> The current in-scope coverage is ' + Math.round(yr1ScopePct) + '% of estimated IT spend, leaving ' + Math.round(100 - yr1ScopePct) + '% addressable.');
+    else if (yr1ScopePct >= 90) insights.push('In-scope coverage is already high at ' + Math.round(yr1ScopePct) + '% of estimated IT spend &mdash; limited remaining expansion headroom.');
 
     if (fullYr1 > 0) {
       var msYr5Pct = data.fullStackSeries[4] ? (data.totalMsSeries[4] / data.fullStackSeries[4]) * 100 : 0;
@@ -1007,7 +1009,7 @@ function buildExecutiveBrief() {
     var headlineEl = document.getElementById('exec-brief-headline');
     if (headlineEl) {
       if (fullYr1 > 0) {
-        headlineEl.textContent = (industry || 'This organization') + ' spends ' + tcoFmtMillions(fullYr1) + ' annually on IT (' + (itSpendPct ? itSpendPct.toFixed(1) : '0.0') + '% of revenue, ' + (variance >= 0 ? '+' : '') + variance.toFixed(1) + '% vs benchmark). Ensono covers ' + Math.round(yr1ScopePct) + '% of estimated spend, with ' + (topInfra ? topInfra.label : 'Infrastructure') + ' as the top infrastructure cost driver.';
+        headlineEl.textContent = (industry || 'This organization') + ' spends ' + tcoFmtMillions(fullYr1) + ' annually on IT (' + (itSpendPct ? itSpendPct.toFixed(1) : '0.0') + '% of revenue, ' + (variance >= 0 ? '+' : '') + variance.toFixed(1) + '% vs benchmark). In-scope coverage is ' + Math.round(yr1ScopePct) + '% of estimated spend, with ' + (topInfra ? topInfra.label : 'Infrastructure') + ' as the top infrastructure cost driver.';
       } else {
         headlineEl.textContent = 'Configure Global Inputs and towers above to generate a live executive summary.';
       }
@@ -1023,7 +1025,7 @@ function buildExecutiveBrief() {
       { label: 'Infrastructure Spend', value: tcoFmtMillions(infraYr1) + ' (' + Math.round(infraPct) + '%)' },
       { label: 'Managed Services Spend', value: tcoFmtMillions(msYr1) + ' (' + Math.round(msPct) + '%)' },
       { label: 'Total FTEs', value: Math.round(data.totalFte).toLocaleString('en-US') },
-      { label: 'Ensono Coverage (Yr1)', value: Math.round(yr1ScopePct) + '%' },
+      { label: 'In-Scope Coverage (Yr1)', value: Math.round(yr1ScopePct) + '%' },
       { label: 'IT % of Revenue', value: (itSpendPct ? itSpendPct.toFixed(1) : '0.0') + '%' },
       { label: 'Infrastructure CAGR', value: tcoCagr(data.totalInfraSeries[0], data.totalInfraSeries[4]).toFixed(1) + '%' },
       { label: 'Managed Services CAGR', value: tcoCagr(data.totalMsSeries[0], data.totalMsSeries[4]).toFixed(1) + '%' },
@@ -1138,6 +1140,356 @@ function tcoCollapseAllFte() {
   });
 }
 
+function tcoExcelCellStyle(element) {
+  var style = window.getComputedStyle(element);
+  var border = { style: 'thin', color: { rgb: 'D8E1EB' } };
+  return {
+    font: {
+      name: 'Arial',
+      sz: 10,
+      bold: parseInt(style.fontWeight, 10) >= 600,
+      color: { rgb: style.color === 'rgb(255, 255, 255)' ? 'FFFFFF' : '15385B' }
+    },
+    fill: { patternType: 'solid', fgColor: { rgb: tcoExcelColor(style.backgroundColor) } },
+    alignment: { horizontal: element.cellIndex === 0 ? 'left' : 'right', vertical: 'center', wrapText: true },
+    border: { top: border, bottom: border, left: border, right: border }
+  };
+}
+
+function tcoExcelColor(color) {
+  var match = String(color || '').match(/\d+/g);
+  if (!match || match.length < 3) return 'FFFFFF';
+  return match.slice(0, 3).map(function(value) {
+    return Number(value).toString(16).padStart(2, '0');
+  }).join('').toUpperCase();
+}
+
+function tcoExcelValue(text) {
+  var value = String(text || '').trim();
+  if (/^\$[\d,]+(?:\.\d+)?[KM]?$/i.test(value)) {
+    var multiplier = /M$/i.test(value) ? 1000000 : (/K$/i.test(value) ? 1000 : 1);
+    return { value: Number(value.replace(/[$,KM]/gi, '')) * multiplier, format: '$#,##0' };
+  }
+  if (/^-?[\d,]+(?:\.\d+)?%$/.test(value)) return { value: Number(value.replace(/[,%]/g, '')) / 100, format: '0%' };
+  if (/^-?[\d,]+(?:\.\d+)?$/.test(value)) return { value: Number(value.replace(/,/g, '')), format: '#,##0' };
+  return { value: value, format: null };
+}
+
+function tcoExcelBenchmarkStyle(isHeader, isLabel) {
+  var border = { style: 'thin', color: { rgb: 'D8E1EB' } };
+  return {
+    font: { name: 'Arial', sz: 10, bold: true, color: { rgb: isHeader ? 'FFFFFF' : (isLabel ? '1A2B45' : '15385B') } },
+    fill: { patternType: 'solid', fgColor: { rgb: isHeader ? '003366' : 'FFFFFF' } },
+    alignment: { horizontal: isLabel ? 'left' : 'right', vertical: 'center', wrapText: true },
+    border: { top: border, bottom: border, left: border, right: border }
+  };
+}
+
+function tcoAddExcelTable(workbook, sheetName, cardId, tableSelector, includeBenchmark) {
+  var card = document.getElementById(cardId);
+  var table = card ? card.querySelector(tableSelector) : null;
+  if (!table) return;
+  var rows = [];
+  var title = card.querySelector('div[style*="font-size:15px"]');
+  var subtitle = title ? title.nextElementSibling : null;
+  rows.push([title ? title.textContent.trim() : sheetName]);
+  if (subtitle) rows.push([subtitle.textContent.trim()]);
+  rows.push([]);
+  if (includeBenchmark) {
+    rows.push(['IT Spend Benchmarking Summary', 'Value']);
+    [['Industry', 'tco-benchmark-industry'], ['Revenue Range (in $)', 'tco-benchmark-revenue-range'], ['Actual Annual Revenue (in $)', 'tco-benchmark-revenue'], ['IT Spend as a % of Revenue', 'tco-benchmark-pct']].forEach(function(entry) {
+      var valueElement = document.getElementById(entry[1]);
+      rows.push([entry[0], valueElement ? valueElement.textContent.trim() : '']);
+    });
+    rows.push([]);
+  }
+  Array.prototype.slice.call(table.rows).forEach(function(row) {
+    rows.push(Array.prototype.slice.call(row.cells).map(function(cell) { return cell.textContent.trim(); }));
+  });
+
+  var worksheet = XLSX.utils.aoa_to_sheet(rows);
+  var tableStartRow = includeBenchmark ? 10 : 4;
+  var columnCount = table.rows[0].cells.length;
+  worksheet['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: columnCount - 1 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: columnCount - 1 } }];
+  worksheet['!cols'] = Array.prototype.slice.call(table.rows[0].cells).map(function(cell, index) {
+    return { wch: index === 0 ? 34 : Math.max(13, Math.min(19, cell.textContent.trim().length + 4)) };
+  });
+  worksheet['!rows'] = rows.map(function() { return { hpt: 20 }; });
+
+  var titleStyle = { font: { name: 'Arial', sz: 14, bold: true, color: { rgb: '1A3A5C' } }, alignment: { vertical: 'center' } };
+  worksheet.A1.s = titleStyle;
+  if (worksheet.A2) worksheet.A2.s = { font: { name: 'Arial', sz: 10, color: { rgb: '555555' } } };
+  if (includeBenchmark) {
+    ['A4', 'B4'].forEach(function(address) {
+      if (worksheet[address]) worksheet[address].s = tcoExcelBenchmarkStyle(true, address === 'A4');
+    });
+    ['A5', 'A6', 'A7', 'A8'].forEach(function(address) {
+      if (worksheet[address]) worksheet[address].s = tcoExcelBenchmarkStyle(false, true);
+    });
+    ['B5', 'B6', 'B7', 'B8'].forEach(function(address) {
+      if (worksheet[address]) {
+        var benchmarkValue = tcoExcelValue(worksheet[address].v);
+        worksheet[address].v = benchmarkValue.value;
+        worksheet[address].t = typeof benchmarkValue.value === 'number' ? 'n' : 's';
+        if (benchmarkValue.format) worksheet[address].z = benchmarkValue.format;
+        worksheet[address].s = tcoExcelBenchmarkStyle(false, false);
+      }
+    });
+  }
+
+  Array.prototype.slice.call(table.rows).forEach(function(row, rowIndex) {
+    Array.prototype.slice.call(row.cells).forEach(function(cell, columnIndex) {
+      var address = XLSX.utils.encode_cell({ r: tableStartRow - 1 + rowIndex, c: columnIndex });
+      var cellValue = tcoExcelValue(cell.textContent);
+      worksheet[address] = { v: cellValue.value, t: typeof cellValue.value === 'number' ? 'n' : 's', s: tcoExcelCellStyle(cell) };
+      if (cellValue.format) worksheet[address].z = cellValue.format;
+    });
+  });
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+}
+
+function exportTCOAnalysisExcel() {
+  if (!window.XLSX) {
+    alert('The Excel export library is unavailable. Please check your internet connection and try again.');
+    return;
+  }
+  var exportButton = document.getElementById('tco-export-excel-button');
+  var exportButtonText = exportButton ? exportButton.textContent : '';
+  try {
+    if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
+    if (typeof buildTCOFteCard === 'function') buildTCOFteCard();
+    if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+    tcoExpandAll();
+    tcoExpandAllFte();
+    if (exportButton) { exportButton.disabled = true; exportButton.textContent = 'Preparing Excel...'; }
+    var workbook = XLSX.utils.book_new();
+    tcoAddExcelTable(workbook, 'TCO Analysis', 'tco-analysis-card', 'table', true);
+    tcoAddExcelTable(workbook, 'FTE Count', 'tco-fte-card', 'table', false);
+    tcoAddExcelTable(workbook, 'Operational Metrics', 'tco-operational-metrics-card', 'table', false);
+    XLSX.writeFile(workbook, 'TCO-Analysis.xlsx');
+  } catch (error) {
+    console.error('Unable to export TCO Analysis Excel:', error);
+    alert('Unable to create the Excel file. Please try again.');
+  } finally {
+    if (exportButton) { exportButton.disabled = false; exportButton.textContent = exportButtonText; }
+  }
+}
+
+function tcoAddPdfExecutiveOverview() {
+  var benchmarkPanel = document.getElementById('tco-benchmark-summary-panel');
+  var firstExecutiveSection = document.querySelector('#panel-exec-brief .exec-section');
+  var sectionCards = firstExecutiveSection ? Array.prototype.slice.call(firstExecutiveSection.querySelectorAll('.exec-card')) : [];
+  var executiveCards = [sectionCards[0], sectionCards[2], sectionCards[3]].filter(function(card) { return !!card; });
+  if (!benchmarkPanel || executiveCards.length !== 3) return null;
+
+  var overview = document.createElement('div');
+  overview.className = 'tco-pdf-exec-overview';
+  executiveCards.forEach(function(card) {
+    var cardClone = card.cloneNode(true);
+    cardClone.removeAttribute('id');
+    cardClone.querySelectorAll('[id]').forEach(function(element) { element.removeAttribute('id'); });
+    overview.appendChild(cardClone);
+  });
+
+  benchmarkPanel.style.display = 'none';
+  benchmarkPanel.parentNode.insertAdjacentElement('afterend', overview);
+  return { benchmarkPanel: benchmarkPanel, overview: overview };
+}
+
+async function exportExecutiveBriefPdf() {
+  if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+    alert('The PDF export libraries are unavailable. Please check your internet connection and try again.');
+    return;
+  }
+
+  var exportButton = document.getElementById('exec-export-pdf-button');
+  var exportButtonText = exportButton ? exportButton.textContent : '';
+  var executiveBrief = document.querySelector('#panel-exec-brief .exec-brief-wrap');
+  var collapsedSections = [];
+  if (!executiveBrief) return;
+
+  try {
+    if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief();
+    executiveBrief.querySelectorAll('.exec-section-body.exec-collapsed').forEach(function(body) {
+      collapsedSections.push(body);
+      body.classList.remove('exec-collapsed');
+    });
+    if (exportButton) {
+      exportButton.disabled = true;
+      exportButton.textContent = 'Preparing PDF...';
+      exportButton.style.display = 'none';
+    }
+
+    await new Promise(function(resolve) {
+      requestAnimationFrame(function() { requestAnimationFrame(resolve); });
+    });
+
+    var pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    var margin = 6;
+    var contentWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
+    var contentHeight = pdf.internal.pageSize.getHeight() - (margin * 2);
+    var sections = Array.prototype.slice.call(executiveBrief.querySelectorAll('.exec-section'));
+
+    for (var sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
+      if (sectionIndex > 0) pdf.addPage();
+      var section = sections[sectionIndex];
+      var canvas = await window.html2canvas(section, {
+        backgroundColor: '#f4f7fb',
+        scale: 2.5,
+        useCORS: true,
+        logging: false,
+        windowWidth: document.documentElement.scrollWidth,
+        onclone: function(clonedDocument) {
+          var clonedBody = clonedDocument.body;
+          if (!clonedBody) return;
+          clonedBody.style.zoom = '1';
+          clonedBody.style.transform = 'none';
+          clonedBody.style.transformOrigin = 'top left';
+          clonedBody.style.width = '100%';
+        }
+      });
+      var scale = Math.min(contentWidth / canvas.width, contentHeight / canvas.height);
+      var renderWidth = canvas.width * scale;
+      var renderHeight = canvas.height * scale;
+      var offsetX = margin + ((contentWidth - renderWidth) / 2);
+      var offsetY = margin + ((contentHeight - renderHeight) / 2);
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
+    }
+
+    pdf.save('Executive-Brief.pdf');
+  } catch (error) {
+    console.error('Unable to export Executive Brief PDF:', error);
+    alert('Unable to create the PDF. Please try again.');
+  } finally {
+    collapsedSections.forEach(function(body) { body.classList.add('exec-collapsed'); });
+    if (exportButton) {
+      exportButton.disabled = false;
+      exportButton.textContent = exportButtonText;
+      exportButton.style.display = '';
+    }
+  }
+}
+
+async function exportTCOAnalysisPdf() {
+  if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
+    alert('The PDF export libraries are unavailable. Please check your internet connection and try again.');
+    return;
+  }
+
+  var exportButton = document.getElementById('tco-export-pdf-button');
+  var exportButtonText = exportButton ? exportButton.textContent : '';
+  var hiddenButtons = [];
+  var pdfExecutiveOverview = null;
+
+  try {
+    if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
+    if (typeof buildTCOFteCard === 'function') buildTCOFteCard();
+    if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+    if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief();
+    tcoExpandAll();
+    tcoExpandAllFte();
+
+    if (exportButton) {
+      exportButton.disabled = true;
+      exportButton.textContent = 'Preparing PDF...';
+    }
+
+    document.querySelectorAll('#panel-tco-analysis button').forEach(function(button) {
+      hiddenButtons.push({ button: button, display: button.style.display });
+      button.style.display = 'none';
+    });
+    pdfExecutiveOverview = tcoAddPdfExecutiveOverview();
+
+    await new Promise(function(resolve) {
+      requestAnimationFrame(function() { requestAnimationFrame(resolve); });
+    });
+
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    var pageWidth = pdf.internal.pageSize.getWidth();
+    var pageHeight = pdf.internal.pageSize.getHeight();
+    var margin = 6;
+    var contentWidth = pageWidth - (margin * 2);
+    var contentHeight = pageHeight - (margin * 2);
+    var cards = ['tco-analysis-card', 'tco-fte-card', 'tco-operational-metrics-card'];
+
+    for (var cardIndex = 0; cardIndex < cards.length; cardIndex++) {
+      var card = document.getElementById(cards[cardIndex]);
+      if (!card) continue;
+      if (cardIndex > 0) pdf.addPage();
+
+      var rowBreaks = [];
+      var clonedCardHeight = 0;
+      var canvas = await window.html2canvas(card, {
+        backgroundColor: '#ffffff',
+        scale: 2.5,
+        useCORS: true,
+        logging: false,
+        windowWidth: document.documentElement.scrollWidth,
+        onclone: function(clonedDocument) {
+          var clonedBody = clonedDocument.body;
+          if (!clonedBody) return;
+          clonedBody.style.zoom = '1';
+          clonedBody.style.transform = 'none';
+          clonedBody.style.transformOrigin = 'top left';
+          clonedBody.style.width = '100%';
+
+          var clonedCard = clonedDocument.getElementById(card.id);
+          if (!clonedCard) return;
+          var clonedCardRect = clonedCard.getBoundingClientRect();
+          clonedCardHeight = clonedCardRect.height;
+          var clonedRows = Array.prototype.slice.call(clonedCard.querySelectorAll('tr'));
+          rowBreaks = clonedRows.map(function(row) {
+            return row.getBoundingClientRect().top - clonedCardRect.top;
+          }).filter(function(position, index, positions) {
+            return position > 0 && positions.indexOf(position) === index;
+          }).sort(function(a, b) { return a - b; });
+        }
+      });
+      var scale = contentWidth / canvas.width;
+      var sourcePageHeight = Math.floor(contentHeight / scale);
+      var sourceTop = 0;
+      var canvasScaleY = clonedCardHeight ? canvas.height / Math.max(clonedCardHeight, 1) : 1;
+      rowBreaks = rowBreaks.map(function(position) { return Math.round(position * canvasScaleY); });
+
+      while (sourceTop < canvas.height) {
+        var pageLimit = Math.min(sourceTop + sourcePageHeight, canvas.height);
+        var sourceBottom = pageLimit;
+        var nextRowTop = 0;
+        rowBreaks.forEach(function(rowTop) {
+          if (rowTop > sourceTop && rowTop <= pageLimit) sourceBottom = rowTop;
+          if (!nextRowTop && rowTop > pageLimit) nextRowTop = rowTop;
+        });
+        if (nextRowTop && nextRowTop - pageLimit <= 40 * canvasScaleY) sourceBottom = nextRowTop;
+        if (sourceBottom <= sourceTop) sourceBottom = pageLimit;
+        var sourceHeight = sourceBottom - sourceTop;
+        var pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        pageCanvas.getContext('2d').drawImage(canvas, 0, sourceTop, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
+        pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, sourceHeight * scale, undefined, 'FAST');
+        sourceTop = sourceBottom;
+        if (sourceTop < canvas.height) pdf.addPage();
+      }
+    }
+
+    pdf.save('TCO-Analysis.pdf');
+  } catch (error) {
+    console.error('Unable to export TCO Analysis PDF:', error);
+    alert('Unable to create the PDF. Please try again.');
+  } finally {
+    if (pdfExecutiveOverview) {
+      pdfExecutiveOverview.overview.remove();
+      pdfExecutiveOverview.benchmarkPanel.style.display = '';
+    }
+    hiddenButtons.forEach(function(entry) { entry.button.style.display = entry.display; });
+    if (exportButton) {
+      exportButton.disabled = false;
+      exportButton.textContent = exportButtonText;
+    }
+  }
+}
+
 function tcoFmtFte(n) {
   return Math.round(n || 0).toLocaleString('en-US');
 }
@@ -1184,10 +1536,9 @@ function tcoGetFteTowers() {
     { label: 'SECURITY', fte: securityFte }
   ];
 
-  // Tools/Governance FTE allocations mirror the Overlays/Cross Functional Services 15%/20% ceil'd shares.
+  // Governance FTE allocation mirrors the Overlays/Cross Functional Services 20% ceil'd share.
   var subtotalFte = towers.reduce(function(s, t) { return s + t.fte; }, 0);
   towers.push({ label: 'SERVICES MANAGEMENT (SMO/PMO)', fte: Math.ceil(subtotalFte * 0.20) });
-  towers.push({ label: 'MANAGEMENT TOOLS', fte: Math.ceil(subtotalFte * 0.15) });
 
   return towers;
 }
@@ -3823,18 +4174,16 @@ function updateOverlaysCFSSizing() {
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="ms-loading">Configure Managed Services above to calculate Tools &amp; Governance allocations...</td></tr>';
     if (totalBanner) totalBanner.textContent = '$0';
     if (collapsedBanner) collapsedBanner.textContent = '$0';
-    if (metaBanner) metaBanner.textContent = 'Tools: $0 (0 FTEs) + Governance: $0 (0 FTEs)';
+    if (metaBanner) metaBanner.textContent = 'Tools: $0 + Governance: $0 (0 FTEs)';
     return;
   }
 
   setOverlaysCardVisible(true);
 
   var toolsAnnual = totalAnnual * 0.15;
-  var toolsFte = Math.ceil(totalFte * 0.15);
   var governanceAnnual = totalAnnual * 0.20;
   var governanceFte = Math.ceil(totalFte * 0.20);
   var cfsAnnual = toolsAnnual + governanceAnnual;
-  var cfsFte = toolsFte + governanceFte;
 
   function fmtMoney(n) { return '$' + Math.round(n || 0).toLocaleString('en-US'); }
   function fmtFte(n) { return (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -3877,10 +4226,10 @@ function updateOverlaysCFSSizing() {
   '</tr>';
 
   rowsHtml += '<tr class="dc-cfs-allocation-row">' +
-    '<td class="dc-label">Cross Functional Services FTEs</td>' +
+    '<td class="dc-label">Governance FTEs</td>' +
     '<td></td>' +
     '<td></td>' +
-    '<td class="dc-cfs-tools">' + fmtFteWhole(toolsFte) + '</td>' +
+    '<td class="dc-cfs-tools"></td>' +
     '<td class="dc-cfs-governance">' + fmtFteWhole(governanceFte) + '</td>' +
   '</tr>';
 
@@ -3889,7 +4238,7 @@ function updateOverlaysCFSSizing() {
   var overlaysMonthlyEl = document.getElementById('overlays-cfs-total-monthly-value');
   if (overlaysMonthlyEl) overlaysMonthlyEl.textContent = fmtMoney(cfsAnnual / 12);
   if (collapsedBanner) collapsedBanner.textContent = fmtMoney(cfsAnnual);
-  if (metaBanner) metaBanner.textContent = 'Tools: ' + fmtMoney(toolsAnnual) + ' (' + fmtFteWhole(toolsFte) + ' FTEs) + Governance: ' + fmtMoney(governanceAnnual) + ' (' + fmtFteWhole(governanceFte) + ' FTEs)';
+  if (metaBanner) metaBanner.textContent = 'Tools: ' + fmtMoney(toolsAnnual) + ' + Governance: ' + fmtMoney(governanceAnnual) + ' (' + fmtFteWhole(governanceFte) + ' FTEs)';
 }
 
 var _datacenterSizingListenersBound = false;
