@@ -572,12 +572,13 @@ function buildTCOAnalysis() {
   });
   var estimatedItSpendTotal = tcoTotal(estimatedItSpendSeries);
   var ensonoScopeTotal = estimatedItSpendTotal ? (tcoTotal(fullStackSeries) / estimatedItSpendTotal) * 100 : 0;
-  html += tcoRowHtml({ label: 'ESTIMATED % IN-SCOPE', series: ensonoScopeSeries, total: ensonoScopeTotal, rowClass: 'tco-full-stack', formatter: tcoFmtPercent });
 
   html += tcoRowHtml({ label: 'ESTIMATED TOTAL IT SPEND', series: estimatedItSpendSeries, total: estimatedItSpendTotal, rowClass: 'tco-full-stack' });
 
   // SUMMARY IN-SCOPE always renders last in this fixed-position row group, immediately before TOTAL INFRASTRUCTURE.
   html += tcoRowHtml({ label: 'ESTIMATED SUMMARY IN-SCOPE', series: fullStackSeries, total: tcoTotal(fullStackSeries), rowClass: 'tco-full-stack' });
+
+  html += tcoRowHtml({ label: 'ESTIMATED % IN-SCOPE', series: ensonoScopeSeries, total: ensonoScopeTotal, rowClass: 'tco-full-stack', formatter: tcoFmtPercent });
 
   var infraGroupId = 'tco-group-infra';
   html += tcoRowHtml({ label: 'ESTIMATED TOTAL INFRASTRUCTURE', series: totalInfraSeries, total: tcoTotal(totalInfraSeries), rowClass: 'tco-section-infra', toggleGroup: infraGroupId });
