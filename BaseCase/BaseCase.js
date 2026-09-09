@@ -5702,10 +5702,9 @@ var DB_OPTIONS =
   '<option value="db2">Managed Database (DB2)</option>';
 
 var MW_OPTIONS =
-  '<option value="web_server">Managed Web Server</option>' +
-  '<option value="web_app_server">Managed Web Application Server</option>' +
-  '<option value="cloud_app_server">Managed Cloud Application Server</option>' +
-  '<option value="eai">Managed Enterprise Application Integration</option>';
+  '<option value="web_server">Managed Web Servers (Apache, Nginx, ... etc.)</option>' +
+  '<option value="web_app_server">Managed Web Application Servers (Tomcat, JBoss, Payara, ... etc.)</option>' +
+  '<option value="cloud_app_server">Managed Cloud Application Servers (Kubernetes, AWS Lambda, Azure Functions, ... etc.)</option>';
 
 function addDbRow() {
   var n = _dbRowCount++;
