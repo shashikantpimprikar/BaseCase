@@ -5704,7 +5704,7 @@ var DB_OPTIONS =
 var MW_OPTIONS =
   '<option value="web_server">Managed Web Servers (Apache HTTP, Internet Information Services - IIS, Sun Java Web, Jigsaw etc.)</option>' +
   '<option value="web_app_server">Managed Web Application Server (IBM Websphere, Oracle Weblogic, Apache TomCat etc.)</option>' +
-  '<option value="cloud_app_server">Cloud Application Server (Cloud services, API integrations, API management, B2B integration etc.)</option>';
+  '<option value="cloud_app_server">Managed Cloud Application Server (Cloud services, API integrations, API management, B2B integration etc.)</option>';
 
 function addDbRow() {
   var n = _dbRowCount++;
