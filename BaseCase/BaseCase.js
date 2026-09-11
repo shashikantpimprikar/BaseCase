@@ -212,6 +212,19 @@ function formatRevenueReadable(n) {
   return formatItSpendCurrency(n);
 }
 
+// Adds thousands separators while retaining a numeric string for calculations.
+function formatRevenueInput(input) {
+  if (!input) return;
+  var raw = String(input.value || '').replace(/,/g, '').replace(/[^0-9.]/g, '');
+  var parts = raw.split('.');
+  var integerPart = parts.shift() || '';
+  var decimalPart = parts.join('').slice(0, 2);
+  integerPart = integerPart.replace(/^0+(?=\d)/, '');
+  var formatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (raw.indexOf('.') !== -1) formatted += '.' + decimalPart;
+  input.value = formatted;
+}
+
 // Global Inputs: Industry Type + Revenue Range -> IT Spend % lookup -> Actual Annual IT Spend calculation.
 function updateItSpendBenchmark() {
   updateTCOBenchmarkSummary();
@@ -478,18 +491,6 @@ function tcoGetEstimatedItSpendYr1() {
 }
 
 var _tcoGroupSeq = 0;
-function tcoGrowthCellStyle(rowClass) {
-  if ((rowClass || '').indexOf('tco-full-stack') !== -1) {
-    return 'background:#0a477d !important; color:#ffffff !important; font-weight:700 !important;';
-  }
-  if ((rowClass || '').indexOf('tco-section-') !== -1) {
-    return 'background:#d6e5f3 !important; color:#003366 !important; font-weight:700 !important;';
-  }
-  if ((rowClass || '').indexOf('tco-leaf') !== -1) {
-    return 'background:#eef4fb !important; color:#15385b !important; font-weight:700 !important;';
-  }
-  return 'background:#f1f6fb !important; color:#15385b !important; font-weight:700 !important;';
-}
 
 function tcoRowHtml(opts) {
   // opts: { label, series, total, rowClass, extraClasses, indent, toggleGroup, formatter }
@@ -500,12 +501,8 @@ function tcoRowHtml(opts) {
     toggle = '<span class="tco-toggle-arrow tco-row-toggle" onclick="tcoToggleGroup(\'' + opts.toggleGroup + '\', this)">\u25bc</span> ';
   }
   var cells = '<td class="dc-label" style="padding-left:' + indentPx + 'px;">' + toggle + opts.label + '</td>';
-  var yr1 = opts.series && opts.series.length ? Number(opts.series[0] || 0) : 0;
   opts.series.forEach(function(v, idx) {
-    var n = Number(v || 0);
-    var highlightGrowth = idx > 0 && Math.round(n) !== Math.round(yr1);
-    var style = highlightGrowth ? ' style="' + tcoGrowthCellStyle(opts.rowClass) + '"' : '';
-    cells += '<td' + style + '>' + fmt(v) + '</td>';
+    cells += '<td>' + fmt(v) + '</td>';
   });
   cells += '<td>' + fmt(opts.total) + '</td>';
   var classes = opts.rowClass + (opts.extraClasses ? ' ' + opts.extraClasses : '');

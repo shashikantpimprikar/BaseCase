@@ -137,6 +137,7 @@
        HEADER
   ══════════════════════════════════════════ -->
   <div class="header">
+    <div class="ensono-logo" aria-label="Ensono">ensono<span class="ensono-logo-dot">•</span></div>
     <div id="loadedCaseDisplay" style="position:absolute; left:20px; font-size:14px; font-weight:400; font-style:italic; color:white; display:none;">
       Loaded: <span id="loadedCaseName"></span>
     </div>
@@ -291,9 +292,9 @@
                   </div>
                   <div class="split-field">
                     <label class="field-label" for="actual-annual-revenue">Actual Annual Revenue (in $)</label>
-                    <input type="number" id="actual-annual-revenue" min="0" step="any"
+                          <input type="text" id="actual-annual-revenue" inputmode="decimal" autocomplete="off"
                            placeholder="Enter revenue (e.g., 5000000000)"
-                           oninput="updateItSpendBenchmark()" />
+                            oninput="formatRevenueInput(this); updateItSpendBenchmark()" />
                     <div id="actual-annual-revenue-readable" style="margin-top:4px; font-size:11px; color:#666666;"></div>
                   </div>
                 </div>
