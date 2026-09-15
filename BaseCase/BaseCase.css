@@ -81,9 +81,9 @@ body {
   transform: translateY(-50%);
   color: #ffffff;
   font-family: "Segoe UI Light", "Arial Narrow", sans-serif;
-  font-size: 34px;
+  font-size: 35.7px;
   font-weight: 300;
-  letter-spacing: -1.8px;
+  letter-spacing: -1.2px;
   line-height: 1;
   opacity: 0.95;
   z-index: 1;
@@ -93,10 +93,10 @@ body {
   display: inline-block;
   margin-left: 1px;
   font-family: Arial, sans-serif;
-  font-size: 11px;
+  font-size: 10.5px;
   letter-spacing: 0;
   vertical-align: top;
-  transform: translateY(-2px);
+  transform: translateY(-5px);
 }
 
 /* ── Layout ── */
@@ -144,9 +144,9 @@ body {
   gap: 8px;
   padding: 12px 14px;
   cursor: pointer;
-  color: #a8b8cc;
+  color: #ffffff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   border-left: 3px solid transparent;
   transition: color 0.15s, border-color 0.15s, background-color 0.15s;
   user-select: none;
@@ -174,9 +174,9 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #a8b8cc;
+  color: #ffffff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   padding: 13px 12px 12px;
   cursor: pointer;
   user-select: none;
