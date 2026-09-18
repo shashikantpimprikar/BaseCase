@@ -1246,6 +1246,78 @@ function tcoAddExcelTable(workbook, sheetName, cardId, tableSelector, includeBen
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 }
 
+// Input Summary is rendered as nested divs (not a <table>), so it needs its own div-aware Excel exporter.
+function tcoAddExcelInputsSummary(workbook) {
+  var container = document.getElementById('tco-inputs-summary-body');
+  if (!container || !container.children.length) return;
+
+  var rows = [];
+  var mergeRanges = [];
+  var titleRowIndices = [];
+  var headerRowIndices = [];
+  var totalRowIndices = [];
+
+  var children = Array.prototype.slice.call(container.children);
+  for (var i = 0; i < children.length - 1; i += 2) {
+    var headingEl = children[i];
+    var boxEl = children[i + 1];
+    if (!boxEl) break;
+
+    var rowDivs = Array.prototype.slice.call(boxEl.querySelectorAll(':scope > .pdf-row'));
+    var parsedRows = rowDivs.map(function(rowDiv) {
+      return Array.prototype.slice.call(rowDiv.children).map(function(cell) { return cell.textContent.trim(); });
+    });
+    var maxCols = parsedRows.reduce(function(m, r) { return Math.max(m, r.length); }, 1);
+
+    titleRowIndices.push(rows.length);
+    rows.push([headingEl.textContent.trim()]);
+    mergeRanges.push({ s: { r: rows.length - 1, c: 0 }, e: { r: rows.length - 1, c: Math.max(maxCols - 1, 0) } });
+
+    parsedRows.forEach(function(r, idx) {
+      while (r.length < maxCols) r.push('');
+      if (idx === 0) headerRowIndices.push(rows.length);
+      if (r[0] === 'Total') totalRowIndices.push(rows.length);
+      rows.push(r);
+    });
+
+    rows.push([]);
+  }
+
+  if (!rows.length) return;
+
+  var worksheet = XLSX.utils.aoa_to_sheet(rows);
+  worksheet['!merges'] = mergeRanges;
+  var overallMaxCols = rows.reduce(function(m, r) { return Math.max(m, r.length); }, 1);
+  worksheet['!cols'] = Array.apply(null, { length: overallMaxCols }).map(function(_, idx) { return { wch: idx === 0 ? 34 : 20 }; });
+  worksheet['!rows'] = rows.map(function() { return { hpt: 20 }; });
+
+  var titleStyle = { font: { name: 'Arial', sz: 12, bold: true, color: { rgb: '2B145F' } }, fill: { patternType: 'solid', fgColor: { rgb: 'EEE7FB' } } };
+  var headerStyle = { font: { name: 'Arial', sz: 10, bold: true, color: { rgb: 'FFFFFF' } }, fill: { patternType: 'solid', fgColor: { rgb: '3D1D83' } } };
+  var totalStyle = { font: { name: 'Arial', sz: 10, bold: true, color: { rgb: '3D1D83' } }, fill: { patternType: 'solid', fgColor: { rgb: 'EEE7FB' } } };
+  var normalStyle = { font: { name: 'Arial', sz: 10, color: { rgb: '2B145F' } } };
+
+  function styleRow(rowIndex, style) {
+    for (var c = 0; c < overallMaxCols; c++) {
+      var address = XLSX.utils.encode_cell({ r: rowIndex, c: c });
+      if (!worksheet[address]) worksheet[address] = { t: 's', v: '' };
+      worksheet[address].s = style;
+    }
+  }
+
+  titleRowIndices.forEach(function(r) { styleRow(r, titleStyle); });
+  headerRowIndices.forEach(function(r) { styleRow(r, headerStyle); });
+  totalRowIndices.forEach(function(r) { styleRow(r, totalStyle); });
+  rows.forEach(function(r, rIdx) {
+    if (titleRowIndices.indexOf(rIdx) !== -1 || headerRowIndices.indexOf(rIdx) !== -1 || totalRowIndices.indexOf(rIdx) !== -1) return;
+    for (var c = 0; c < r.length; c++) {
+      var address = XLSX.utils.encode_cell({ r: rIdx, c: c });
+      if (worksheet[address] && !worksheet[address].s) worksheet[address].s = normalStyle;
+    }
+  });
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Input Summary');
+}
+
 function exportTCOAnalysisExcel() {
   if (!window.XLSX) {
     alert('The Excel export library is unavailable. Please check your internet connection and try again.');
@@ -1257,6 +1329,7 @@ function exportTCOAnalysisExcel() {
     if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
     if (typeof buildTCOFteCard === 'function') buildTCOFteCard();
     if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+    if (typeof buildTCOInputsSummary === 'function') buildTCOInputsSummary();
     tcoExpandAll();
     tcoExpandAllFte();
     if (exportButton) { exportButton.disabled = true; exportButton.textContent = 'Preparing Excel...'; }
@@ -1264,6 +1337,7 @@ function exportTCOAnalysisExcel() {
     tcoAddExcelTable(workbook, 'TCO Analysis', 'tco-analysis-card', 'table', true);
     tcoAddExcelTable(workbook, 'FTE Count', 'tco-fte-card', 'table', false);
     tcoAddExcelTable(workbook, 'Operational Metrics', 'tco-operational-metrics-card', 'table', false);
+    tcoAddExcelInputsSummary(workbook);
     XLSX.writeFile(workbook, 'TCO-Analysis.xlsx');
   } catch (error) {
     console.error('Unable to export TCO Analysis Excel:', error);
