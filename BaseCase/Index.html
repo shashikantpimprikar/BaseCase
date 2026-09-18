@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Assumptive Base Case - 5 Year TCO Estimator</title>
-  <link rel="stylesheet" href="BaseCase.css?v=watermark20260915" />
+  <link rel="stylesheet" href="BaseCase.css?v=watermark-four-rings20260916" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.0/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
@@ -44,7 +44,12 @@
   </script>
 </head>
 <body>
-  <div class="page-watermark" aria-hidden="true"></div>
+  <div class="page-watermark" aria-hidden="true">
+    <span class="watermark-ring watermark-ring-1"></span>
+    <span class="watermark-ring watermark-ring-2"></span>
+    <span class="watermark-ring watermark-ring-3"></span>
+    <span class="watermark-ring watermark-ring-4"></span>
+  </div>
   <script>
     // Define tower toggle function inline so it's available for onchange handlers
     function toggleTowerCard(towerId) {
@@ -4320,7 +4325,7 @@
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
               <button onclick="tcoExpandAll()" style="padding:6px 12px; background:#e0e0e0; color:#1a2535; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Expand All</button>
               <button onclick="tcoCollapseAll()" style="padding:6px 12px; background:#e0e0e0; color:#1a2535; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Collapse All</button>
-              <button onclick="buildTCOAnalysis(); buildTCOOperationalMetrics();" style="padding:6px 12px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">&#128260; Refresh Data</button>
+              <button onclick="buildTCOAnalysis(); buildTCOOperationalMetrics(); buildTCOInputsSummary();" style="padding:6px 12px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">&#128260; Refresh Data</button>
               <button id="tco-export-pdf-button" onclick="exportTCOAnalysisPdf()" style="padding:6px 12px; background:#003366; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Export PDF</button>
               <button id="tco-export-excel-button" onclick="exportTCOAnalysisExcel()" style="padding:6px 12px; background:#217346; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">Export Excel</button>
             </div>
@@ -4445,6 +4450,20 @@
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div id="tco-inputs-summary-card" style="background:#ffffff; border:1px solid #dde3ea; border-radius:8px; padding:18px; margin-top:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+              <div>
+                <div style="font-size:15px; font-weight:700; color:#1a3a5c;">Input Summary</div>
+                <div style="font-size:12px; color:#555; margin-top:2px;">Full summary of the Input tab, towerwise (excludes Live Sizing sections)</div>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button onclick="buildTCOInputsSummary()" style="padding:6px 12px; background:#2196F3; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">&#128260; Refresh Data</button>
+              </div>
+            </div>
+
+            <div id="tco-inputs-summary-body"></div>
           </div>
         </div>
       </div>

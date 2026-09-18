@@ -14,6 +14,7 @@ function switchTab(tabId, el) {
   if (tabId === 'tco-analysis' && typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
   if (tabId === 'tco-analysis' && typeof buildTCOFteCard === 'function') buildTCOFteCard();
   if (tabId === 'tco-analysis' && typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+  if (tabId === 'tco-analysis' && typeof buildTCOInputsSummary === 'function') buildTCOInputsSummary();
   if (tabId === 'exec-brief' && typeof buildExecutiveBrief === 'function') buildExecutiveBrief();
 }
 
@@ -1303,6 +1304,7 @@ async function exportExecutiveBriefPdf() {
   var exportButtonText = exportButton ? exportButton.textContent : '';
   var executiveBrief = document.querySelector('#panel-exec-brief .exec-brief-wrap');
   var collapsedSections = [];
+  var firstPageTitleClone = null;
   if (!executiveBrief) return;
 
   try {
@@ -1327,8 +1329,18 @@ async function exportExecutiveBriefPdf() {
     var contentHeight = pdf.internal.pageSize.getHeight() - (margin * 2);
     var sections = Array.prototype.slice.call(executiveBrief.querySelectorAll('.exec-section'));
 
+    // The title is outside the section elements, so temporarily add it to the first captured page.
+    var title = executiveBrief.querySelector('.exec-brief-title');
+    if (title && sections.length) {
+      var titleClone = title.cloneNode(true);
+      var clonedExportButton = titleClone.querySelector('#exec-export-pdf-button');
+      if (clonedExportButton) clonedExportButton.parentNode.style.display = 'none';
+      firstPageTitleClone = titleClone;
+      sections[0].insertBefore(firstPageTitleClone, sections[0].firstChild);
+    }
+
+    var renderedPageCount = 0;
     for (var sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
-      if (sectionIndex > 0) pdf.addPage();
       var section = sections[sectionIndex];
       var canvas = await window.html2canvas(section, {
         backgroundColor: '#f4f7fb',
@@ -1345,12 +1357,15 @@ async function exportExecutiveBriefPdf() {
           clonedBody.style.width = '100%';
         }
       });
+      if (!canvas.width || !canvas.height) continue;
+      if (renderedPageCount > 0) pdf.addPage();
       var scale = Math.min(contentWidth / canvas.width, contentHeight / canvas.height);
       var renderWidth = canvas.width * scale;
       var renderHeight = canvas.height * scale;
       var offsetX = margin + ((contentWidth - renderWidth) / 2);
       var offsetY = margin + ((contentHeight - renderHeight) / 2);
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', offsetX, offsetY, renderWidth, renderHeight, undefined, 'FAST');
+      renderedPageCount++;
     }
 
     pdf.save('Executive-Brief.pdf');
@@ -1358,6 +1373,7 @@ async function exportExecutiveBriefPdf() {
     console.error('Unable to export Executive Brief PDF:', error);
     alert('Unable to create the PDF. Please try again.');
   } finally {
+    if (firstPageTitleClone && firstPageTitleClone.parentNode) firstPageTitleClone.parentNode.removeChild(firstPageTitleClone);
     collapsedSections.forEach(function(body) { body.classList.add('exec-collapsed'); });
     if (exportButton) {
       exportButton.disabled = false;
@@ -1382,6 +1398,7 @@ async function exportTCOAnalysisPdf() {
     if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
     if (typeof buildTCOFteCard === 'function') buildTCOFteCard();
     if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+    if (typeof buildTCOInputsSummary === 'function') buildTCOInputsSummary();
     if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief();
     tcoExpandAll();
     tcoExpandAllFte();
@@ -1408,12 +1425,15 @@ async function exportTCOAnalysisPdf() {
     var margin = 6;
     var contentWidth = pageWidth - (margin * 2);
     var contentHeight = pageHeight - (margin * 2);
-    var cards = ['tco-analysis-card', 'tco-fte-card', 'tco-operational-metrics-card'];
+    var cards = ['tco-analysis-card', 'tco-fte-card', 'tco-operational-metrics-card', 'tco-inputs-summary-card'];
+    var cursorY = margin;
+    var cardGap = 4;
+    var minSliceHeight = 18;
 
     for (var cardIndex = 0; cardIndex < cards.length; cardIndex++) {
       var card = document.getElementById(cards[cardIndex]);
       if (!card) continue;
-      if (cardIndex > 0) pdf.addPage();
+      if (cardIndex > 0 && cursorY > margin) cursorY += cardGap;
 
       var rowBreaks = [];
       var clonedCardHeight = 0;
@@ -1435,7 +1455,7 @@ async function exportTCOAnalysisPdf() {
           if (!clonedCard) return;
           var clonedCardRect = clonedCard.getBoundingClientRect();
           clonedCardHeight = clonedCardRect.height;
-          var clonedRows = Array.prototype.slice.call(clonedCard.querySelectorAll('tr'));
+          var clonedRows = Array.prototype.slice.call(clonedCard.querySelectorAll('tr, .pdf-row'));
           rowBreaks = clonedRows.map(function(row) {
             return row.getBoundingClientRect().top - clonedCardRect.top;
           }).filter(function(position, index, positions) {
@@ -1444,29 +1464,46 @@ async function exportTCOAnalysisPdf() {
         }
       });
       var scale = contentWidth / canvas.width;
-      var sourcePageHeight = Math.floor(contentHeight / scale);
       var sourceTop = 0;
       var canvasScaleY = clonedCardHeight ? canvas.height / Math.max(clonedCardHeight, 1) : 1;
       rowBreaks = rowBreaks.map(function(position) { return Math.round(position * canvasScaleY); });
 
       while (sourceTop < canvas.height) {
+        var availableHeight = pageHeight - margin - cursorY;
+        if (availableHeight < minSliceHeight) {
+          pdf.addPage();
+          cursorY = margin;
+          availableHeight = contentHeight;
+        }
+        var sourcePageHeight = Math.floor(availableHeight / scale);
         var pageLimit = Math.min(sourceTop + sourcePageHeight, canvas.height);
         var sourceBottom = pageLimit;
-        var nextRowTop = 0;
-        rowBreaks.forEach(function(rowTop) {
-          if (rowTop > sourceTop && rowTop <= pageLimit) sourceBottom = rowTop;
-          if (!nextRowTop && rowTop > pageLimit) nextRowTop = rowTop;
-        });
-        if (nextRowTop && nextRowTop - pageLimit <= 40 * canvasScaleY) sourceBottom = nextRowTop;
+        if (pageLimit < canvas.height) {
+          var lastBreak = 0;
+          rowBreaks.forEach(function(rowTop) {
+            if (rowTop > sourceTop && rowTop <= pageLimit) lastBreak = rowTop;
+          });
+          // No row boundary fits in the leftover space, so start the card on a fresh page instead of splitting a row.
+          if (!lastBreak && sourceTop === 0 && cursorY > margin) {
+            pdf.addPage();
+            cursorY = margin;
+            continue;
+          }
+          if (lastBreak) sourceBottom = lastBreak;
+        }
         if (sourceBottom <= sourceTop) sourceBottom = pageLimit;
         var sourceHeight = sourceBottom - sourceTop;
         var pageCanvas = document.createElement('canvas');
         pageCanvas.width = canvas.width;
         pageCanvas.height = sourceHeight;
         pageCanvas.getContext('2d').drawImage(canvas, 0, sourceTop, canvas.width, sourceHeight, 0, 0, canvas.width, sourceHeight);
-        pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, margin, contentWidth, sourceHeight * scale, undefined, 'FAST');
+        pdf.addImage(pageCanvas.toDataURL('image/png'), 'PNG', margin, cursorY, contentWidth, sourceHeight * scale, undefined, 'FAST');
+        cursorY += sourceHeight * scale;
         sourceTop = sourceBottom;
-        if (sourceTop < canvas.height) pdf.addPage();
+        if (sourceTop < canvas.height) {
+          pdf.addPage();
+          cursorY = margin;
+        }
       }
     }
 
@@ -1709,7 +1746,254 @@ function buildTCOOperationalMetrics() {
   tbody.innerHTML = html;
 }
 
+/* ══════════════════════════════════════════════════════
+   TCO ANALYSIS - INPUT SUMMARY (full Input tab summary, excludes Live Sizing)
+══════════════════════════════════════════════════════ */
+function buildTCOInputsSummary() {
+  var container = document.getElementById('tco-inputs-summary-body');
+  if (!container) return;
 
+  function esc(str) {
+    return String(str == null ? '' : str).replace(/[&<>"]/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function fieldValue(id) {
+    var el = document.getElementById(id);
+    if (!el) return '—';
+    if (el.tagName === 'SELECT') {
+      var opt = el.options[el.selectedIndex];
+      var text = opt ? opt.text.trim() : '';
+      return text || 'Not Selected';
+    }
+    if (el.type === 'checkbox') return el.checked ? 'Yes' : 'No';
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      var v = (el.value || '').toString().trim();
+      return v === '' ? '—' : v;
+    }
+    var t = (el.textContent || '').toString().trim();
+    return t === '' ? '—' : t;
+  }
+
+  function parseNum(str) {
+    var n = parseFloat(String(str || '').replace(/[^0-9.\-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  function fmtNum(n) {
+    return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  // A value counts as "no input" if it's blank, a placeholder, an unchecked toggle, or a numeric zero.
+  function isMeaningful(value) {
+    var v = String(value == null ? '' : value).trim();
+    if (v === '' || v === '—' || v === 'Not Selected' || v === 'No') return false;
+    if (/^(select |enter |configure)/i.test(v)) return false;
+    if (/^\$?-?[\d,]+(\.\d+)?%?$/.test(v)) {
+      var num = parseFloat(v.replace(/[^0-9.\-]/g, ''));
+      if (!isNaN(num) && num === 0) return false;
+    }
+    return true;
+  }
+
+  var sectionCount = 0;
+
+  function heading(title) {
+    sectionCount++;
+    return '<div style="font-size:14px; font-weight:700; color:#1a3a5c; margin-bottom:8px;' + (sectionCount > 1 ? ' margin-top:22px;' : '') + '">' + sectionCount + '. ' + esc(title) + '</div>';
+  }
+
+  // Simple two-column Field / Value table. Skips rows with no meaningful input; omits the whole section if nothing qualifies.
+  function fieldTable(title, fields) {
+    var filtered = fields
+      .map(function(f) { return [f[0], fieldValue(f[1])]; })
+      .filter(function(f) { return isMeaningful(f[1]); });
+    if (!filtered.length) return '';
+
+    var rowsHtml = filtered.map(function(f, idx) {
+      var bg = idx % 2 === 0 ? '#ffffff' : '#f7f2fc';
+      return '<div class="pdf-row" style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding:7px 14px; background:' + bg + '; border-bottom:1px solid #e3d5f5;">' +
+        '<span style="font-size:12px; color:#2b145f; font-weight:600;">' + esc(f[0]) + '</span>' +
+        '<span style="font-size:12px; color:#3d1d83; font-weight:700; text-align:right;">' + esc(f[1]) + '</span>' +
+      '</div>';
+    }).join('');
+
+    return heading(title) +
+      '<div style="border:1px solid #d9c8f0; border-radius:6px; overflow:hidden; background:#ffffff;">' +
+        '<div class="pdf-row" style="display:flex; justify-content:space-between; align-items:center; background:#003366; color:#fff; font-weight:700; font-size:12px; padding:8px 14px;">' +
+          '<span>Field</span><span>Value</span>' +
+        '</div>' +
+        rowsHtml +
+      '</div>';
+  }
+
+  // Renders a repeatable data table (thead + dynamic tbody) with an auto-computed Total row.
+  // Rows where every numeric column is zero are dropped; the whole section is omitted if no rows remain.
+  function dataTable(title, tbodyId) {
+    var tbody = document.getElementById(tbodyId);
+    var table = tbody ? tbody.closest('table') : null;
+    if (!table) return '';
+    var ths = Array.prototype.slice.call(table.querySelectorAll('thead th'));
+    var headerTexts = ths.map(function(th) { return th.textContent.trim(); });
+    var colCount = headerTexts.filter(function(h) { return h !== ''; }).length;
+
+    var bodyRows = tbody.querySelectorAll('tr');
+    var dataRows = [];
+    bodyRows.forEach(function(tr) {
+      var cells = tr.querySelectorAll('td');
+      var rowValues = [];
+      for (var i = 0; i < colCount; i++) {
+        var td = cells[i];
+        var control = td ? td.querySelector('input, select') : null;
+        rowValues.push(control ? fieldValue(control.id) : (td ? td.textContent.trim() : '—'));
+      }
+      dataRows.push(rowValues);
+    });
+
+    // Determine which columns are numeric (number inputs) so we can sum them / filter empty rows.
+    var numericCol = [];
+    var firstRow = tbody.querySelector('tr');
+    if (firstRow) {
+      var firstCells = firstRow.querySelectorAll('td');
+      for (var ci = 0; ci < colCount; ci++) {
+        var ctrl = firstCells[ci] ? firstCells[ci].querySelector('input[type="number"]') : null;
+        numericCol[ci] = !!ctrl;
+      }
+    }
+    var hasNumericCol = numericCol.indexOf(true) !== -1;
+
+    dataRows = dataRows.filter(function(r) {
+      if (!hasNumericCol) return true;
+      for (var i = 0; i < r.length; i++) {
+        if (numericCol[i] && parseNum(r[i]) !== 0) return true;
+      }
+      return false;
+    });
+    if (!dataRows.length) return '';
+
+    var totals = [];
+    for (var col = 0; col < colCount; col++) {
+      if (col === 0) { totals.push('Total'); continue; }
+      if (numericCol[col]) {
+        var sum = dataRows.reduce(function(acc, r) { return acc + parseNum(r[col]); }, 0);
+        totals.push(fmtNum(sum));
+      } else {
+        totals.push('—');
+      }
+    }
+
+    var headHtml = '<div class="pdf-row" style="display:flex; background:#003366; color:#fff; font-weight:700; font-size:12px;">' +
+      headerTexts.slice(0, colCount).map(function(h) {
+        return '<div style="flex:1; padding:8px 14px;">' + esc(h) + '</div>';
+      }).join('') +
+    '</div>';
+
+    var bodyHtml = dataRows.map(function(r, idx) {
+      var bg = idx % 2 === 0 ? '#ffffff' : '#f7f2fc';
+      return '<div class="pdf-row" style="display:flex; background:' + bg + '; border-bottom:1px solid #e3d5f5;">' +
+        r.map(function(v, ci) {
+          var boldFirst = ci === 0 ? 'font-weight:600;' : '';
+          return '<div style="flex:1; padding:7px 14px; font-size:12px; color:#2b145f; ' + boldFirst + '">' + esc(v) + '</div>';
+        }).join('') +
+      '</div>';
+    }).join('');
+
+    var totalHtml = '<div class="pdf-row" style="display:flex; background:#eee7fb; border-top:1px solid #d9c8f0;">' +
+      totals.map(function(v) {
+        return '<div style="flex:1; padding:7px 14px; font-size:12px; color:#3d1d83; font-weight:700;">' + esc(v) + '</div>';
+      }).join('') +
+    '</div>';
+
+    return heading(title) +
+      '<div style="border:1px solid #d9c8f0; border-radius:6px; overflow:hidden; background:#ffffff;">' +
+        headHtml + bodyHtml + totalHtml +
+      '</div>';
+  }
+
+  var html = '';
+
+  // 1-2. Global Inputs
+  html += fieldTable('Customer Profile & IT Spend', [
+    ['Industry Type', 'industry-type-select'],
+    ['Revenue Range (in $)', 'revenue-range-select'],
+    ['Actual Annual Revenue (in $)', 'actual-annual-revenue'],
+    ['IT Spend %', 'it-spend-percentage-display'],
+    ['Estimated Annual IT Spend', 'actual-annual-it-spend-display']
+  ]);
+  html += fieldTable('Operational Maturity and Delivery', [
+    ['Operational Maturity Level', 'maturityLevel'],
+    ['US Delivery (%)', 'usDelivery'],
+    ['India Delivery (%)', 'indiaDelivery'],
+    ['Assumptive Employment Cost Index (%)', 'eci']
+  ]);
+
+  // 3. Applicable Towers
+  html += fieldTable('Applicable Towers', [
+    ['Distributed Services: Compute', 'tower-compute'],
+    ['Network and Security', 'tower-network-security'],
+    ['Midrange: Compute', 'tower-midrange'],
+    ['Datacenter', 'tower-datacenter'],
+    ['Storage and Backup', 'tower-storage'],
+    ['Database and Middleware (Managed)', 'tower-database'],
+    ['Mainframe', 'tower-mainframe']
+  ]);
+
+  // Compute
+  html += dataTable('Distributed Services: Compute — OS based Server Counts', 'compute-os-tbody');
+  html += dataTable('Distributed Services: Compute — Average vCPU / vRAM based Server Counts', 'compute-vcpu-tbody');
+  html += fieldTable('Distributed Services: Compute — VMware', [['VMware Applicable', 'compute-vmware']]);
+
+  // Midrange
+  html += dataTable('Midrange: Compute — OS based Server Counts', 'midrange-os-tbody');
+  html += dataTable('Midrange: Compute — Average vCPU / vRAM based Server Counts', 'midrange-vcpu-tbody');
+  html += fieldTable('Midrange: Compute — OS Software & Maintenance', [['OS Software & Maintenance Applicable', 'swmaApplicable']]);
+
+  // Storage
+  html += dataTable('Storage and Backup — Storage Inventory', 'storage-tbody');
+  html += fieldTable('Storage and Backup — Backup (Auto-calculated)', [
+    ['Front End Protected Backup (TB)', 'backup-fed-tb'],
+    ['Backup Storage Capacity (TB)', 'backup-storage-tb']
+  ]);
+
+  // Network and Security
+  html += fieldTable('Network and Security', [['Security Applicable', 'network-security-applicable']]);
+
+  // Database and Middleware
+  html += dataTable('Database and Middleware — Database based Instance Counts', 'db-os-tbody');
+  html += dataTable('Database and Middleware — Middleware based Instance Counts', 'mw-os-tbody');
+
+  // Mainframe
+  html += fieldTable('Mainframe — Infrastructure', [
+    ['Installed MIPS', 'mf-mips'],
+    ['DASD — Total (TB)', 'mf-dasd'],
+    ['VTL — Total (TB)', 'mf-vtl']
+  ]);
+  html += fieldTable('Mainframe — Job Scheduling', [
+    ['Job Scheduling in Scope', 'mf-job-scheduling'],
+    ['Thousand Jobs / Month', 'mf-jobs-per-month']
+  ]);
+
+  // Tools
+  html += fieldTable('Tools', [
+    ['Total Tools / Platforms', 'tools-count'],
+    ['Total Tool Users', 'tools-users']
+  ]);
+
+  // PMO/SMO/Governance
+  html += fieldTable('PMO/SMO/Governance', [
+    ['Total Projects / Programs', 'pmo-projects'],
+    ['Total PMO/SMO Staff', 'pmo-staff']
+  ]);
+
+  // Datacenter
+  html += fieldTable('Datacenter', [
+    ['Datacenter - Production', 'datacenter-prod-location'],
+    ['Datacenter - Non Production', 'datacenter-nonprod-location']
+  ]);
+
+  container.innerHTML = html || '<div class="ms-loading">Configure inputs on the Input tab to populate this summary...</div>';
+}
 
 /* ══════════════════════════════════════════════════════
    US / INDIA DELIVERY SYNC
@@ -3046,6 +3330,7 @@ function refreshAdminEditableCalculations() {
   if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis();
   if (typeof buildTCOFteCard === 'function') buildTCOFteCard();
   if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics();
+  if (typeof buildTCOInputsSummary === 'function') buildTCOInputsSummary();
   if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief();
 }
 
@@ -8256,7 +8541,7 @@ document.addEventListener('DOMContentLoaded', function() {
   wireItSpendBenchmarkListeners();
   updateItSpendBenchmark();
   var eciInput = document.getElementById('eci');
-  if (eciInput) eciInput.addEventListener('input', function() { if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis(); if (typeof buildTCOFteCard === 'function') buildTCOFteCard(); if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics(); if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief(); });
+  if (eciInput) eciInput.addEventListener('input', function() { if (typeof buildTCOAnalysis === 'function') buildTCOAnalysis(); if (typeof buildTCOFteCard === 'function') buildTCOFteCard(); if (typeof buildTCOOperationalMetrics === 'function') buildTCOOperationalMetrics(); if (typeof buildTCOInputsSummary === 'function') buildTCOInputsSummary(); if (typeof buildExecutiveBrief === 'function') buildExecutiveBrief(); });
   initAdminEditableTargets();
   setMainframeInfraEditVisibility(false);
   applyDiscountCalculations();

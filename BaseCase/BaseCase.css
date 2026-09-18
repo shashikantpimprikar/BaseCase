@@ -31,17 +31,71 @@ body {
   top: calc(50% + 30px);
   left: 50%;
   width: min(79.35vw, calc(132.25vh - 159px), 688px);
-  height: min(79.35vw, calc(132.25vh - 159px), 688px);
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 355 / 292;
   transform: translate(-50%, -50%);
-  background-image: url("Logo.png");
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
-  background-attachment: fixed;
   opacity: 0.25;
   pointer-events: none;
   z-index: 1500;
+  animation: watermark-fade 12s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.watermark-ring {
+  position: absolute;
+  inset: 0;
+  background: url("Logo.png") center / 100% 100% no-repeat;
+  mix-blend-mode: multiply;
+  transform-origin: 47.04% 56.51%;
+  will-change: transform;
+}
+
+.watermark-ring-1 {
+  -webkit-mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 78%, #000 78.5%, #000 86%, transparent 86.5%);
+  mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 78%, #000 78.5%, #000 86%, transparent 86.5%);
+  animation: watermark-rotate-counterclockwise 12s ease-in-out infinite;
+}
+
+.watermark-ring-2 {
+  -webkit-mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 70.5%, #000 71%, #000 77.5%, transparent 78%);
+  mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 70.5%, #000 71%, #000 77.5%, transparent 78%);
+  animation: watermark-rotate-clockwise 12s ease-in-out infinite;
+}
+
+.watermark-ring-3 {
+  -webkit-mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 63%, #000 63.5%, #000 69%, transparent 69.5%);
+  mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 63%, #000 63.5%, #000 69%, transparent 69.5%);
+  animation: watermark-rotate-counterclockwise 12s ease-in-out infinite;
+}
+
+.watermark-ring-4 {
+  -webkit-mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 55.5%, #000 56%, #000 61.5%, transparent 62%);
+  mask: radial-gradient(circle farthest-side at 47.04% 56.51%, transparent 0 55.5%, #000 56%, #000 61.5%, transparent 62%);
+  animation: watermark-rotate-clockwise 12s ease-in-out infinite;
+}
+
+@keyframes watermark-rotate-clockwise {
+  0% { transform: rotate(0deg); }
+  60%, 82% { transform: rotate(360deg); }
+  82.01%, 100% { transform: rotate(0deg); }
+}
+
+@keyframes watermark-rotate-counterclockwise {
+  0% { transform: rotate(0deg); }
+  60%, 82% { transform: rotate(-360deg); }
+  82.01%, 100% { transform: rotate(0deg); }
+}
+
+@keyframes watermark-fade {
+  0%, 60% { opacity: 0.25; }
+  72%, 82% { opacity: 0; }
+  100% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-watermark,
+  .watermark-ring {
+    animation: none;
+  }
 }
 
 /* ── Header ── */
